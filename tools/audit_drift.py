@@ -219,7 +219,7 @@ def main(argv=None) -> int:
         added,
         "debug-stmt",
         r"\bbreakpoint\(\)|^\s*import pdb\b",
-        lambda a: is_code(a["file"]),
+        lambda a: is_code(a["file"]) and not in_audit(a["file"]),
         "medium",
         "high",
         "Debug statement left in code",
