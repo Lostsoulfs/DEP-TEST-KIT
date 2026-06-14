@@ -856,7 +856,7 @@ requires-dist = [
     { name = "polyfactory", marker = "extra == 'lib'", specifier = ">=2.16" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'integration'", specifier = ">=3.2" },
     { name = "pydantic", marker = "extra == 'lib'", specifier = ">=2.7" },
-    { name = "pyjwt", extras = ["crypto"], marker = "extra == 'integration'", specifier = ">=2.9" },
+    { name = "pyjwt", extras = ["crypto"], marker = "extra == 'integration'", specifier = ">=2.13" },
     { name = "pymongo", marker = "extra == 'integration'", specifier = ">=4.7" },
     { name = "pymysql", marker = "extra == 'integration'", specifier = ">=1.1" },
     { name = "redis", marker = "extra == 'integration'", specifier = ">=5.0" },
