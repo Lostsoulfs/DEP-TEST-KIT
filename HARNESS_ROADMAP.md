@@ -11,6 +11,13 @@ unused declarations), and ships a planted-bug proof test.
 - Batch 1 (lib) — **complete**: `lib/schema_validation` (pydantic + polyfactory),
   `lib/async_http_contract` (respx + httpx), `lib/temporal_logic` (time-machine),
   `lib/mutation_quality` (mutmut), `lib/openapi_fuzz` (schemathesis + flask).
+- Batch 2 (integration) — **complete**: `redis_cache`, `kafka_stream`, `mysql_store`,
+  `mongo_store`, `object_store` (all testcontainers).
+- Batch 3 (ai) — **complete**: `agentic_pbt` (hypothesis), `llm_eval` (deepeval).
+- Standalone: `integration/network_chaos` (Toxiproxy + redis) — missing socket-timeout
+  under a stalled upstream.
+- Batch 4 lib (security-leaning) — **complete**: `crypto_correctness` (cryptography),
+  `secret_scanning` (detect-secrets), `sql_orm` (sqlalchemy), `retry_resilience` (tenacity).
 
 ## Batch 1 — lib (library-backed, in-process) ✅ complete
 Source: research T1 (testing-library ecosystem survey).
@@ -53,7 +60,28 @@ Deviation: both run deterministically without a live model (the agent's property
 inference is encoded; the LLM judge is a deterministic metric), so the `ai` lane needs
 no secret and runs on the fast (non-Docker) lane. Noted in `docs/LEARNINGS.md`.
 
-## Batch 4 — ai (candidates, not started)
+## Batch 4 — lib + integration (security-leaning)
+Source: extends Batches 1-3 toward auth / crypto / supply-chain failure classes.
+
+**lib (4) — shipped** (branch `feat/batch4-lib-security`):
+
+| Candidate | Dep | Failure class | Status |
+|-----------|-----|---------------|--------|
+| crypto_correctness | cryptography | unauthenticated encryption accepts a tampered ciphertext (CWE-327/353) | ✅ shipped |
+| secret_scanning | detect-secrets | naive `password=` grep misses real secrets (CWE-798) | ✅ shipped |
+| sql_orm | sqlalchemy | ORM model dropped a UNIQUE constraint a mock can't enforce | ✅ shipped |
+| retry_resilience | tenacity | policy retries a permanent (non-retryable) error (CWE-754) | ✅ shipped |
+
+**integration (4) — staged** (next PR; testcontainers, needs Docker):
+
+| Candidate | Dep | Failure class | Status |
+|-----------|-----|---------------|--------|
+| vault_secrets | hvac | over-broad secret read — parent path vs single key (CWE-200) | staged |
+| elasticsearch_index | elasticsearch | missing-refresh read-after-write inconsistency | staged |
+| rabbitmq_redelivery | pika | auto-ack loses a message on processing failure (CWE-754) | staged |
+| keycloak_oidc | pyjwt | forged token accepted without signature verification (CWE-347) | staged |
+
+## Batch 5 — ai (candidates, deferred)
 Source: research T7 ("AI Workflows, Cross-Talk, Tools, Errors"). Frameworks verified
 real (Ragas, DeepEval/G-Eval, the MetaQA metamorphic pattern); the doc's comparison
 tables / exact percentages are unsourced and were ignored. Keep the lane CI-safe:
