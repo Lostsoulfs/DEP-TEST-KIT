@@ -20,6 +20,8 @@ unused declarations), and ships a planted-bug proof test.
   `secret_scanning` (detect-secrets), `sql_orm` (sqlalchemy), `retry_resilience` (tenacity).
 - Batch 4 integration (security-leaning) — **complete**: `vault_secrets` (hvac),
   `elasticsearch_index` (elasticsearch), `rabbitmq_redelivery` (pika), `keycloak_oidc` (pyjwt).
+- Batch 5 (ai) — **complete**: `rag_faithfulness` (deepeval, context precision),
+  `geval_rubric` (deepeval, deterministic rubric grader), `metamorphic_stability` (hypothesis).
 
 ## Batch 1 — lib (library-backed, in-process) ✅ complete
 Source: research T1 (testing-library ecosystem survey).
@@ -83,17 +85,23 @@ Source: extends Batches 1-3 toward auth / crypto / supply-chain failure classes.
 | rabbitmq_redelivery | pika | auto-ack loses a message on processing failure (CWE-754) | ✅ shipped |
 | keycloak_oidc | pyjwt | forged token accepted without signature verification (CWE-347) | ✅ shipped |
 
-## Batch 5 — ai (candidates, deferred)
+## Batch 5 — ai ✅ complete
 Source: research T7 ("AI Workflows, Cross-Talk, Tools, Errors"). Frameworks verified
-real (Ragas, DeepEval/G-Eval, the MetaQA metamorphic pattern); the doc's comparison
-tables / exact percentages are unsourced and were ignored. Keep the lane CI-safe:
-deterministic metric or local stand-in, no live LLM / no API key.
+real (DeepEval/G-Eval, the MetaQA metamorphic pattern); the doc's comparison tables /
+exact percentages are unsourced and were ignored. Lane stays CI-safe: deterministic
+metric or local stand-in, no live LLM / no API key.
 
-| Candidate | Dep | Failure class | Notes |
-|-----------|-----|---------------|-------|
-| `rag_faithfulness` | ragas (or deepeval) | generator extrapolates beyond retrieved context (hallucination) | deepens `llm_eval`; Ragas `faithfulness` / `context_precision`; deterministic fixtures |
-| `geval_rubric` | deepeval (G-Eval) | output violates an explicit rubric step (tone/criteria drift) | hard-coded `evaluation_steps` for reproducibility |
-| `metamorphic_stability` | hypothesis | output swings under semantically-neutral prompt perturbations (ungrounded) — MetaQA pattern | pure-Hypothesis; oracle stable, buggy volatile; no model needed |
+| Candidate | Dep | Failure class | Status |
+|-----------|-----|---------------|--------|
+| `rag_faithfulness` | deepeval | low context **precision** — retriever returns off-topic distractors (the retrieval half `llm_eval` doesn't cover) | ✅ shipped |
+| `geval_rubric` | deepeval | output violates a hard-coded rubric step (deterministic G-Eval stand-in) | ✅ shipped |
+| `metamorphic_stability` | hypothesis | output swings under semantically-neutral perturbations (MetaQA relation) | ✅ shipped |
+
+Deviation: `rag_faithfulness` uses **deepeval context-precision**, not Ragas — Ragas is
+stale (0.4.3, Jan 2026) and `llm_eval` already covers generation faithfulness, so the
+distinct, useful angle is retrieval precision. `geval_rubric` uses a deterministic
+`RubricMetric` rather than live G-Eval (which needs an LLM judge), per the no-live-LLM
+invariant. No new dependency — both deepeval and hypothesis were already in the `ai` extra.
 
 Out of scope for this harness library (platform/agent work, not testing harnesses):
 agent protocols (MCP/A2A/ACP/SDE), orchestration stacks (LangGraph/CrewAI/AutoGen),

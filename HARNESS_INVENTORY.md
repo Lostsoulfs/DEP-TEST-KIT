@@ -1,6 +1,6 @@
 # Harness Inventory
 
-**Total: 23 harnesses** (10 lib, 11 integration, 2 ai). This repo grows in batches of ≤6;
+**Total: 26 harnesses** (10 lib, 11 integration, 5 ai). This repo grows in batches of ≤6;
 see `HARNESS_ROADMAP.md` for what's next. Every harness ships a paired test and a
 planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstring.
 
@@ -232,6 +232,34 @@ planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstr
 - **Proof:** the "Eiffel Tower is in Berlin" answer scores 0.0 and is caught; the
   grounded answer scores 1.0 and passes. Deterministic metric stands in for the LLM
   judge (deviation noted in `docs/LEARNINGS.md`).
+
+### rag_faithfulness — RAG context precision (deepeval)
+- **File:** `harnesses/ai/rag_faithfulness_test_harness.py`
+- **Dep:** `deepeval`
+- **Why:** a RAG answer is only as good as its retrieval — a generator can be faithful to
+  irrelevant context ("faithful to the wrong source"). `llm_eval` tests generation
+  faithfulness; this tests the other half — retrieval **context precision**.
+- **Proof:** a deterministic `ContextPrecisionMetric` (BaseMetric) scores the buggy
+  retriever's off-topic distractors at 0.0 (caught); the oracle's on-topic chunk at 1.0.
+
+### geval_rubric — deterministic rubric grader / G-Eval stand-in (deepeval)
+- **File:** `harnesses/ai/geval_rubric_test_harness.py`
+- **Dep:** `deepeval`
+- **Why:** output must satisfy explicit rubric criteria (structure / required fields /
+  value ranges / allowed enums); G-Eval scores these with an LLM judge — non-deterministic
+  and key-dependent. A deterministic grader checks hard-coded `evaluation_steps` reproducibly.
+- **Proof:** a `RubricMetric` (BaseMetric) runs each hard-coded step as a predicate; the
+  buggy output (`confidence` 1.7, outside [0,1]) fails one step and is caught; the oracle
+  passes all four.
+
+### metamorphic_stability — output invariance under neutral perturbation (Hypothesis)
+- **File:** `harnesses/ai/metamorphic_stability_test_harness.py`
+- **Dep:** `hypothesis`
+- **Why:** a grounded responder gives the same answer to semantically-equivalent phrasings;
+  an ungrounded one swings under meaning-preserving perturbations (case / whitespace /
+  punctuation). The MetaQA-style metamorphic relation `f(perturb(q)) == f(q)`, no model.
+- **Proof:** Hypothesis composes neutral perturbations; the buggy (length-parity) responder
+  flips its answer (caught on a trailing space); the normalized oracle is invariant.
 
 ## Convention
 See `template/harness_template.py` for the shape and `docs/decisions/0001-stack-decisions.md`
