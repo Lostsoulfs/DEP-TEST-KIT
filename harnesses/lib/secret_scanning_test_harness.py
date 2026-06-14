@@ -33,11 +33,14 @@ import sys
 from detect_secrets.core import scan
 from detect_secrets.settings import transient_settings
 
-# A realistic config blob: real secrets, none of them named `password=`.
+# A realistic config blob: real secrets, none of them named `password=`. The three
+# secret-shaped lines carry the repo's `allowlist secret` marker (see tools/scan_staged.py):
+# they are intentional, reviewed test fixtures. The marker is a source comment, NOT part of
+# BLOB, so detect-secrets still sees the raw values at runtime and the proof keeps its teeth.
 BLOB = "\n".join([
-    "aws_access_key_id = AKIAIOSFODNN7EXAMPLE",
-    "service_token = c2VjcmV0LWhpZ2gtZW50cm9weS10b2tlbi1abE0xMjM0NTY3ODkw",
-    "-----BEGIN RSA PRIVATE KEY-----",
+    "aws_access_key_id = AKIAIOSFODNN7EXAMPLE",  # allowlist secret
+    "service_token = c2VjcmV0LWhpZ2gtZW50cm9weS10b2tlbi1abE0xMjM0NTY3ODkw",  # allowlist secret
+    "-----BEGIN RSA PRIVATE KEY-----",  # allowlist secret
     "MIIEowIBAAKCAQEArandombase64looking...",
     "-----END RSA PRIVATE KEY-----",
 ])
