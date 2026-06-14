@@ -1,6 +1,6 @@
 # 0003 — Agent scaffolding and self-audit enforcement (mirrors Codex)
 
-Status: proposed (2026-06-14). Records the upgrade that brings DEP-TEST-KIT's agent
+Status: accepted (2026-06-14). Records the upgrade that brings DEP-TEST-KIT's agent
 scaffolding and self-audit to parity with `Codex-Speed-Test`, the platform where these
 patterns matured. This repo was created before that upgrade path existed.
 
@@ -44,7 +44,11 @@ a gate to make itself green. `/audit-retro` stays manual and propose-only.
 Any agent working in this repo inherits the same self-audit path: hooks enforce
 formatting and block generated/secret edits mechanically, the auditor agent runs the
 deterministic + semantic + MoE review before every push, and outcomes are logged to
-`docs/LEARNINGS.md`. CI-side mirroring (an `audit.yml` workflow posting a PR comment)
-needs `pull-requests: write` and is held for an explicit workflow-permissions decision.
-On its first run the auditor caught real drift (unnecessary suppressions in Batch 1) —
-evidence the gate has teeth.
+`docs/LEARNINGS.md`. The CI-side `audit.yml` workflow runs the auditor on every PR and
+posts the report as a comment (report-only, so PR heads stay mergeable), and on push to
+`main` it appends `docs/audit-history.ndjson` and commits it with `[skip ci]` — feeding
+`/audit-retro` without held bot runs. (Per-PR auto-fix/history pushing was tried and
+reverted: GITHUB_TOKEN pushes create approval-held runs in this environment, which never
+satisfy the required status checks and brick PR merges — see `docs/LEARNINGS.md`.) On its
+first run the auditor caught real drift (unnecessary suppressions in Batch 1) — evidence
+the gate has teeth.

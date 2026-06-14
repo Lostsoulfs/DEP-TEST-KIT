@@ -1,6 +1,6 @@
 # 0002 — Self-audit policy and the MoE audit panel
 
-Status: proposed (2026-06-14). Records how this repo audits itself before work moves
+Status: accepted (2026-06-14). Records how this repo audits itself before work moves
 forward. Motivated by the repo's class of artefact: harnesses that must *prove* they
 catch a real failure, which warrants stricter checking than ordinary code where a
 passing build is enough to proceed.

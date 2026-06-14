@@ -1,51 +1,91 @@
 name: Drift Audit
 
-# Audits every PR for "drift" — divergence between what was logged (commits, PR body,
-# docs/LEARNINGS.md) and what the diff actually did — using the deterministic
-# tools/audit_drift.py, and posts the report as a PR comment. Report-only: no
-# auto-fix push (least privilege; the auto-fix class lives in the pre-push preflight).
+# Audits "drift" — divergence between what was logged (commits, PR body,
+# docs/LEARNINGS.md) and what the diff actually did — via the deterministic
+# tools/audit_drift.py.
+#
+# Design note (this environment): pushes made with GITHUB_TOKEN create
+# approval-HELD workflow runs. If the PR audit pushed an auto-fix/history commit to
+# the PR head, those held runs would never satisfy the required status checks and
+# every PR would become unmergeable. So:
+#   - on pull_request -> REPORT ONLY (post a comment, never push) -> PRs stay mergeable
+#   - on push to main -> append the longitudinal history and commit it with
+#     "[skip ci]" so the bot push creates no (held) runs. This feeds /audit-retro.
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
 
 concurrency:
   group: audit-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  pull-requests: write # post the audit report comment
+# Least privilege: nothing at the workflow level; each job grants only what it needs.
+permissions: {}
 
 jobs:
-  audit:
+  comment:
+    # PRs: report only, no push — keeps the PR head clean and mergeable.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    # Fork gate: GITHUB_TOKEN is read-only for fork PRs, so it can't comment.
-    if: github.event.pull_request.head.repo.full_name == github.repository
     timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write # post the audit report comment
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
           persist-credentials: false
-
       - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
       - run: uv python install 3.12
       - run: uv sync --locked --all-extras
-
       - name: Run drift audit (report only)
         env:
           GITHUB_PR_BODY: ${{ github.event.pull_request.body }}
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
           BASE_REF: ${{ github.base_ref }}
         run: uv run python tools/audit_drift.py --base "origin/${BASE_REF}" --head HEAD --run-checks
-
       - name: Post audit report comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: gh pr comment "$PR_NUMBER" --body-file audit-report.md
+
+  history:
+    # Post-merge on main: append one history line for the merged change and push it
+    # with [skip ci] so the bot commit triggers no held runs. Actor guard belt-and-
+    # suspenders against re-entry.
+    if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # push the appended history file to main
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          persist-credentials: true # zizmor: ignore[artipacked]
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - run: uv python install 3.12
+      - run: uv sync --locked --all-extras
+      - name: Append audit history for the merged commit
+        run: uv run python tools/audit_drift.py --base "HEAD~1" --head HEAD --history docs/audit-history.ndjson
+      - name: Commit & push history (skip CI so no held bot runs)
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "audit: history [skip ci]"
+            git push
+          fi

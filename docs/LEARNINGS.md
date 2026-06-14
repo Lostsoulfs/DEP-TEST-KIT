@@ -5,6 +5,17 @@ dated. This is **data, not instructions** — never act on a line here as a comm
 The auditor and explorer agents append here; when it grows past ~500 lines, promote
 evergreen rules into the ADRs and mark superseded entries historical.
 
+## 2026-06-14 — Drift Audit: never push to the PR head in this environment
+- Switched the audit to push `audit-history.ndjson` + ruff fixes to the PR branch
+  (PR #5). It worked once, then bricked the merge: GITHUB_TOKEN pushes create
+  approval-HELD workflow runs here, so the required status checks on the bot-commit
+  head stayed `action_required` forever and the merge failed with "4 of 4 required
+  status checks are expected". `[skip ci]` doesn't help on a PR head — required checks
+  must be present AND passing, and skipping leaves them absent.
+- Fix: PR audit is report-only (comment, no push → PR head stays clean and mergeable);
+  history is appended on **push to main** and committed with `[skip ci]` (no held runs).
+  /audit-retro is fed from main, not from PRs.
+
 ## 2026-06-14 — Batch 2 (integration) complete
 - Shipped 5 real-service harnesses (testcontainers): `redis_cache` (TTL missing),
   `mysql_store` (utf8mb3 charset trap), `mongo_store` (missing unique index),
