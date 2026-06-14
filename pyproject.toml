@@ -35,6 +35,7 @@ integration = [
   "boto3>=1.34",
   "minio>=7.2",
   "confluent-kafka>=2.5",
+  "toxiproxy-python>=0.1",
 ]
 # AI-output / agentic-testing harnesses (in-process, deterministic — no live LLM,
 # no API key; an LLM judge is stood in for so the lane stays CI-safe).
@@ -78,6 +79,7 @@ known_first_party = ["harnesses"]
 DEP002 = [
   "pytest-xdist", "testcontainers", "psycopg", "mutmut",
   "redis", "pymysql", "pymongo", "boto3", "minio", "confluent-kafka",
+  "toxiproxy-python",
 ]
 
 [tool.ruff]

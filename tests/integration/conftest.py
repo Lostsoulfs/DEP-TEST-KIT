@@ -172,3 +172,86 @@ def kafka_bootstrap():
 
     with KafkaContainer("confluentinc/cp-kafka:7.6.0").with_kraft() as k:
         yield k.get_bootstrap_server()
+
+
+# --- Toxiproxy network chaos ---------------------------------------------------
+# Redis reached THROUGH a Toxiproxy proxy on a shared Docker network, so a test can
+# inject network faults (a stall) and prove the client's timeout handling. Both
+# containers join one Network; the proxy forwards to `redis-upstream:6379`.
+@pytest.fixture(scope="session")
+def _chaos_stack():
+    import time
+    import urllib.error
+    import urllib.request
+
+    from testcontainers.core.container import DockerContainer
+    from testcontainers.core.network import Network
+    from testcontainers.redis import RedisContainer
+
+    net = Network()
+    net.create()
+    try:
+        redis_up = (
+            RedisContainer("redis:7-alpine")
+            .with_network(net)
+            .with_network_aliases("redis-upstream")
+        )
+        toxi = (
+            DockerContainer("ghcr.io/shopify/toxiproxy:2.12.0")
+            .with_network(net)
+            .with_exposed_ports(8474, 16379)
+        )
+        with redis_up, toxi:
+            host = toxi.get_container_host_ip()
+            api_port = int(toxi.get_exposed_port(8474))
+            # Readiness: poll the Toxiproxy control API rather than guess a log line.
+            version_url = f"http://{host}:{api_port}/version"
+            for _ in range(50):
+                try:
+                    urllib.request.urlopen(version_url, timeout=1)
+                    break
+                except urllib.error.URLError:
+                    time.sleep(0.2)
+            yield {
+                "host": host,
+                "api_port": api_port,
+                "proxy_port": int(toxi.get_exposed_port(16379)),
+            }
+    finally:
+        net.remove()
+
+
+@pytest.fixture()
+def chaos_proxy(_chaos_stack):
+    from toxiproxy import Toxiproxy
+
+    server = Toxiproxy()
+    server.update_api_consumer(_chaos_stack["host"], _chaos_stack["api_port"])
+    proxy = server.create(
+        name="redis-chaos",
+        listen="0.0.0.0:16379",
+        upstream="redis-upstream:6379",
+    )
+    try:
+        yield proxy, _chaos_stack
+    finally:
+        proxy.destroy()
+
+
+@pytest.fixture()
+def redis_via_proxy(chaos_proxy):
+    """Factory: socket_timeout -> redis.Redis connected through Toxiproxy."""
+    import redis
+
+    _proxy, stack = chaos_proxy
+
+    def factory(socket_timeout):
+        return redis.Redis(
+            host=stack["host"],
+            port=stack["proxy_port"],
+            socket_timeout=socket_timeout,
+            socket_connect_timeout=2,
+            decode_responses=True,
+        )
+
+    return factory
