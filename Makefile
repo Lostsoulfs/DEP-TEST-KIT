@@ -1,6 +1,6 @@
 # DEP-TEST-KIT — common tasks. Everything runs through uv for a locked, reproducible env.
 
-.PHONY: sync test test-int lint deptry audit selftest sbom all review
+.PHONY: sync test test-int lint deptry audit selftest mutation sbom all review
 
 sync:            ## provision the locked environment (all extras)
 	uv sync --locked --all-extras
@@ -25,6 +25,9 @@ selftest:        ## per-harness self-tests (in-process lib + ai harnesses)
 		echo "--- $$h"; \
 		uv run --frozen python "$$h" --self-test || exit 1; \
 	done
+
+mutation:        ## mutation-quality check (real mutmut; Linux/WSL only — boxed/mutmut#397)
+	uv run --frozen python harnesses/lib/mutation_quality_test_harness.py --self-test
 
 sbom:            ## generate a CycloneDX SBOM
 	uvx cyclonedx-py environment "$$(uv python find)" --output-format json -o sbom.cdx.json
