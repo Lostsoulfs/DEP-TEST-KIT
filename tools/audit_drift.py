@@ -35,7 +35,17 @@ FLAVORS = ("lib", "integration", "ai")
 
 def sh(cmd: list[str]) -> str:
     try:
-        return subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, check=False).stdout
+        # Force UTF-8 decode: on Windows the default locale codec is cp1252, which
+        # crashes on UTF-8 diff content (non-ASCII in docs/code). Linux/CI default UTF-8.
+        return subprocess.run(
+            cmd,
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        ).stdout
     except Exception:
         return ""
 

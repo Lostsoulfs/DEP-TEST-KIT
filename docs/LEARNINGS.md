@@ -19,6 +19,41 @@ evergreen rules into the ADRs and mark superseded entries historical.
 - redis-py 6.0 deprecates `retry_on_timeout` (TimeoutError retried by default) — dropped it;
   default retry is 0, so the proof still sees a raw TimeoutError.
 
+## 2026-06-14 — Mutation-in-CI (advisory) + Windows portability fixes (ADR-0006)
+- Added an advisory `Mutation (advisory)` lane (`mutation.yml`, `continue-on-error`) +
+  `make mutation`, delivering mutation testing via the `mutation_quality` harness. A full
+  incremental per-harness gate is deferred: mutmut 3.x trampolines on package modules
+  (must mutate a top-level module in a temp dir — see the Batch 1 note below).
+- mutmut is native-Windows-incompatible (boxed/mutmut#397). Added `mutmut_available()`;
+  the harness self-test and the two mutmut-dependent tests now **skip** on Windows
+  (env-skip, not silent green) — mirrors the integration Docker skip. Local lib lane on
+  Windows: 35 passed, 3 skipped (was 2 failed).
+- WSL real data point: mutmut runs fine in Ubuntu WSL; the harness self-test reports
+  strong-kills-all / weak-leaves-2. Set up without clobbering the Windows `.venv` via
+  `UV_PROJECT_ENVIRONMENT=/tmp/dtk-venv uv sync --extra lib`.
+- Portability bug: `tools/audit_drift.py` `sh()` decoded git output with the platform
+  locale (cp1252 on Windows) and crashed on UTF-8 diffs (non-ASCII in docs). Forced
+  `encoding="utf-8", errors="replace"`.
+
+## 2026-06-14 — CI: add dependency-review + daemonless/mutmut caveats
+- Added `dependency-review` (PR-diff), mirrored from `testing-kits` with the same SHA pin —
+  the one real CI gap vs testing-kits parity. **CodeQL was NOT a gap**: DEP-TEST-KIT already
+  runs it via GitHub's *default setup* (the passing `Analyze (python)/(actions)` checks); an
+  advanced `codeql.yml` is rejected ("CodeQL analyses from advanced configurations cannot be
+  processed when the default setup is enabled"), so no codeql.yml is added. No
+  `pull_request_target` anywhere → already immune to the TanStack/router 2026-05-11 vector
+  (verified: GHSA-g7cv-rxg3-hmpx / CVE-2026-45321).
+- Verify+gap doc landed at `docs/CI_RESEARCH_VERIFICATION_2026-06-14.md`: the ChatGPT
+  self-governing-CI doc verified 100%; the Gemini CI doc **fabricated** its "38% AI-gen
+  mutation" table and an entire tool (`fest` does not exist — real Rust Python mutation
+  testers are `irradiate`/`pymute`), and misrepresented the mutmut timeout formula
+  (actual: `(T_base + timeout_constant) * timeout_multiplier`) and Docker's tiered minutes.
+- Daemonless/local caveats: **mutmut 3.x refuses to run natively on Windows**
+  (boxed/mutmut#397) — needs WSL; CI is Linux so the mutation harness/gate is fine there.
+  Testcontainers Ryuk fails to boot under rootless Docker/Podman (socket perms) → set
+  `TESTCONTAINERS_RYUK_DISABLED=true` (verified). Podman's default network is `podman`,
+  not `bridge`; testcontainers exposes `ProviderPodman`.
+
 ## 2026-06-14 — Audit history: artifacts, not a pushed file (ADR-0004)
 - `/audit-retro` ran and found the history mechanism broken: only 1 run / 1 PR, because
   the post-merge `history` job's push to `main` is rejected by branch protection

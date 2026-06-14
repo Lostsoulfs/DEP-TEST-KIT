@@ -27,6 +27,7 @@ Self-test:
 from __future__ import annotations
 
 import argparse
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -35,6 +36,15 @@ from pathlib import Path
 # mutmut loads its config from the *current working directory at import time*, so it
 # must only ever run inside the throwaway temp project below — never the repo root.
 _MUTMUT = str(Path(sys.executable).parent / "mutmut")
+
+
+def mutmut_available() -> bool:
+    """mutmut 3.x refuses to run on native Windows (boxed/mutmut#397); Linux/CI/WSL is
+    fine. Callers skip rather than fail when it can't run — mirrors the integration
+    lane's Docker-absent skip, never a silent green."""
+    if sys.platform.startswith("win"):
+        return False
+    return Path(_MUTMUT).exists() or shutil.which("mutmut") is not None
 
 # The code under test: one line, a handful of mutants.
 TARGET_SRC = """\
@@ -82,6 +92,12 @@ def count_survivors(test_src: str) -> int:
 
 
 def run_self_test() -> int:
+    if not mutmut_available():
+        print(
+            "self-test: SKIPPED (mutmut does not run on native Windows — boxed/mutmut#397; "
+            "runs on Linux/CI/WSL)."
+        )
+        return 0
     failures = 0
     strong = count_survivors(STRONG_TEST_SRC)
     weak = count_survivors(WEAK_TEST_SRC)

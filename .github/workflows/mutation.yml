@@ -1,0 +1,35 @@
+name: Mutation (advisory)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    name: Mutation-quality (advisory, non-blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Advisory: a surviving mutant never blocks a merge. Promote to required only once an
+    # incremental per-harness runner exists (ADR-0006).
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - run: uv python install 3.12
+      - name: Provision lib env
+        run: uv sync --locked --extra lib
+      - name: Mutation-quality check (real mutmut)
+        run: make mutation

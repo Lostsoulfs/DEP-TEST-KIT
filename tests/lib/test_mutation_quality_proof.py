@@ -1,6 +1,13 @@
 """Proof: mutmut catches the vacuous (weak) suite and clears the strong one."""
 
+import pytest
+
 from harnesses.lib import mutation_quality_test_harness as h
+
+pytestmark = pytest.mark.skipif(
+    not h.mutmut_available(),
+    reason="mutmut unavailable on this platform (native Windows unsupported; runs on Linux/CI/WSL)",
+)
 
 
 def test_proof_weak_suite_leaves_survivors() -> None:
