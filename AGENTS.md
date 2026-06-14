@@ -28,6 +28,13 @@ audited**, never floating.
 
 If a command is missing or not applicable, say so. Do not invent a green check.
 
+## Self-audit before every push (ADR-0002)
+Before `git push`, run `make all` (mechanical gates) **and** the MoE audit panel in
+`docs/moe-audit.md`. Push only if no blocking lens fails; record lens verdicts in the
+PR's `## Self-audit` section. This repo's artefacts must *prove* they catch a failure,
+so the audit is adversarial and forward-looking, not a pass/fail build. Enforcement via
+a committed `.claude/` hook/agent requires explicit operator sign-off (see Boundaries).
+
 ## Harness contract (the shape)
 - One self-contained harness `harnesses/<lib|integration>/<name>_test_harness.py` with a
   module docstring covering **WHY / HOW / WHERE** (see `template/harness_template.py`).
