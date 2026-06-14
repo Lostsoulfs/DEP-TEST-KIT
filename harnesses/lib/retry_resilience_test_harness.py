@@ -25,6 +25,7 @@ Self-test:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import sys
 from typing import Callable
 
@@ -68,10 +69,9 @@ def attempts_for_permanent(make_policy: Callable[[], tenacity.Retrying]) -> int:
         calls["n"] += 1
         raise PermanentError("never going to succeed")
 
-    try:
+    # Swallow the final re-raised error; we only care about the attempt count.
+    with contextlib.suppress(Exception):
         make_policy()(op)
-    except Exception:
-        pass
     return calls["n"]
 
 
@@ -97,8 +97,11 @@ def run_self_test() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Retry-policy correctness harness")
-    parser.add_argument("--self-test", action="store_true")
-    parser.parse_args(argv)
+    parser.add_argument("--self-test", action="store_true", help="run the planted-bug self-test")
+    args = parser.parse_args(argv)
+    if not args.self_test:
+        parser.print_help(sys.stderr)
+        return 2
     return run_self_test()
 
 

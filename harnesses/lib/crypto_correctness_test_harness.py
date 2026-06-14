@@ -39,7 +39,8 @@ class AeadBox:
     """Correct AEAD: integrity-protected; decrypt() raises on tamper."""
 
     def __init__(self, key: bytes | None = None) -> None:
-        self.key = key or AESGCM.generate_key(bit_length=128)
+        # `is None`, not `or`: an explicit empty b"" key must be honored, not replaced.
+        self.key = AESGCM.generate_key(bit_length=128) if key is None else key
 
     def encrypt(self, plaintext: bytes) -> Tuple[bytes, bytes]:
         nonce = os.urandom(12)
@@ -55,7 +56,8 @@ class BuggyBox:
     """Plausible-but-wrong: confidentiality without integrity. Same interface."""
 
     def __init__(self, key: bytes | None = None) -> None:
-        self.key = key or os.urandom(16)
+        # `is None`, not `or`: an explicit empty b"" key must be honored, not replaced.
+        self.key = os.urandom(16) if key is None else key
 
     def encrypt(self, plaintext: bytes) -> Tuple[bytes, bytes]:
         nonce = os.urandom(16)
@@ -109,8 +111,11 @@ def run_self_test() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Authenticated-encryption correctness harness")
-    parser.add_argument("--self-test", action="store_true")
-    parser.parse_args(argv)
+    parser.add_argument("--self-test", action="store_true", help="run the planted-bug self-test")
+    args = parser.parse_args(argv)
+    if not args.self_test:
+        parser.print_help(sys.stderr)
+        return 2
     return run_self_test()
 
 

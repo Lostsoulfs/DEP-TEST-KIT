@@ -18,8 +18,10 @@ misses what detect-secrets catches.
 WHERE: lib/ — dependency-backed (`detect-secrets`) but fully in-process, no
 service. Adds `detect-secrets` to the `lib` extra in pyproject.toml.
 
-NOTE: detect-secrets' adhoc scanning API (scan_line + transient_settings) is used
-below; confirm the call path under `uv run` when wiring CI.
+NOTE: this uses detect-secrets' adhoc scanning API (scan_line + transient_settings),
+an internal API. It is pinned exactly by uv.lock, so CI (`uv sync --locked`) is stable;
+a future detect-secrets that breaks the call path surfaces as a loud test failure (the
+oracle count drops to 0), never a silent pass. Re-confirm the path when bumping the dep.
 
 Self-test:
     python harnesses/lib/secret_scanning_test_harness.py --self-test
@@ -91,8 +93,11 @@ def run_self_test() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Secret-scanning coverage harness")
-    parser.add_argument("--self-test", action="store_true")
-    parser.parse_args(argv)
+    parser.add_argument("--self-test", action="store_true", help="run the planted-bug self-test")
+    args = parser.parse_args(argv)
+    if not args.self_test:
+        parser.print_help(sys.stderr)
+        return 2
     return run_self_test()
 
 
