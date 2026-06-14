@@ -24,6 +24,10 @@ lib = [
   "mutmut>=3.2",
   "schemathesis>=4.0",
   "flask>=3.0",
+  "cryptography>=43.0",
+  "detect-secrets>=1.5",
+  "sqlalchemy>=2.0",
+  "tenacity>=9.0",
 ]
 # real-service harnesses (spin ephemeral containers; need Docker at run time)
 integration = [

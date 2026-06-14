@@ -1,6 +1,6 @@
 # Harness Inventory
 
-**Total: 14 harnesses** (6 lib, 6 integration, 2 ai). This repo grows in batches of ≤6;
+**Total: 19 harnesses** (10 lib, 7 integration, 2 ai). This repo grows in batches of ≤6;
 see `HARNESS_ROADMAP.md` for what's next. Every harness ships a paired test and a
 planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstring.
 
@@ -76,6 +76,46 @@ planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstr
 - **Proof:** the string-typed `count` is caught (`FailureGroup`); the conformant
   app validates clean.
 
+### crypto_correctness — authenticated vs unauthenticated encryption (cryptography)
+- **File:** `harnesses/lib/crypto_correctness_test_harness.py`
+- **Tests:** `tests/lib/test_crypto_correctness_test_harness.py` (+ `_proof.py`)
+- **Dep:** `cryptography`
+- **Why:** an "encrypt→decrypt, assert equal" test passes for an unauthenticated cipher
+  (AES-CTR) exactly as for an authenticated one (AES-GCM); the gap shows only when an
+  attacker tampers with the ciphertext (CWE-327 / CWE-353).
+- **Proof:** a flipped ciphertext byte is silently accepted by the buggy (AES-CTR) box and
+  rejected with `InvalidTag` by the oracle (AES-GCM).
+
+### secret_scanning — detector coverage vs naive grep (detect-secrets)
+- **File:** `harnesses/lib/secret_scanning_test_harness.py`
+- **Tests:** `tests/lib/test_secret_scanning_test_harness.py` (+ `_proof.py`)
+- **Dep:** `detect-secrets`
+- **Why:** an in-house `password=` substring check passes its own example test yet is blind
+  to the secrets that actually leak — AWS keys, high-entropy tokens, private-key blocks
+  (CWE-798 hard-coded credentials).
+- **Proof:** detect-secrets finds the planted AWS key / entropy token / private key in a
+  blob that contains no literal `password=`; the naive grep finds none.
+
+### sql_orm — real ORM constraint vs mocked Session (SQLAlchemy)
+- **File:** `harnesses/lib/sql_orm_test_harness.py`
+- **Tests:** `tests/lib/test_sql_orm_test_harness.py` (+ `_proof.py`)
+- **Dep:** `sqlalchemy` (in-memory SQLite, in-process)
+- **Why:** a mocked Session has no schema, so a model that forgot `unique=True` looks correct
+  and still writes duplicates in production. A real engine — even `sqlite://` — raises
+  `IntegrityError`. The in-process sibling of `postgres_store`, no Docker.
+- **Proof:** the buggy model (`unique=False`) accepts a duplicate email against real SQLite;
+  the oracle (`unique=True`) raises `IntegrityError`.
+
+### retry_resilience — retry-only-transient vs retry-everything (tenacity)
+- **File:** `harnesses/lib/retry_resilience_test_harness.py`
+- **Tests:** `tests/lib/test_retry_resilience_test_harness.py` (+ `_proof.py`)
+- **Dep:** `tenacity`
+- **Why:** retry logic tested against a stub that eventually succeeds proves nothing about
+  *which* errors it retries; a retry-on-`Exception` policy keeps hammering a permanent
+  failure that can never succeed (CWE-754).
+- **Proof:** the buggy policy attempts a permanent error `MAX_ATTEMPTS` times; the oracle
+  (retry only `TransientError`) attempts it exactly once.
+
 ## integration (real ephemeral service, needs Docker)
 
 ### postgres_store — real UNIQUE constraint on ephemeral PostgreSQL
@@ -128,6 +168,17 @@ planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstr
   consumer joined — a data-loss bug a mock broker can't model.
 - **Proof:** the buggy (`latest`) reader receives nothing for a pre-existing message;
   the correct (`earliest`) reader replays it.
+
+### network_chaos — missing socket timeout under a stalled upstream (Toxiproxy)
+- **File:** `harnesses/integration/network_chaos_test_harness.py`
+- **Deps:** `redis`, `toxiproxy-python` · **Isolation:** per-test Toxiproxy proxy on a shared
+  Docker network
+- **Why:** a Redis client with no `socket_timeout` blocks indefinitely when an upstream stalls
+  (a hung node, a saturated proxy); an in-memory mock answers instantly and can't surface an
+  unbounded hang.
+- **Proof:** under a Toxiproxy `timeout` toxic, the resilient client (`socket_timeout=0.5`)
+  raises `redis.TimeoutError` fast; the fragile client (no timeout) blocks the full stall and
+  then raises `redis.ConnectionError` when the proxy drops the connection.
 
 ## ai (deterministic, in-process — no live LLM, no API key)
 
