@@ -53,6 +53,23 @@ Deviation: both run deterministically without a live model (the agent's property
 inference is encoded; the LLM judge is a deterministic metric), so the `ai` lane needs
 no secret and runs on the fast (non-Docker) lane. Noted in `docs/LEARNINGS.md`.
 
+## Batch 4 — ai (candidates, not started)
+Source: research T7 ("AI Workflows, Cross-Talk, Tools, Errors"). Frameworks verified
+real (Ragas, DeepEval/G-Eval, the MetaQA metamorphic pattern); the doc's comparison
+tables / exact percentages are unsourced and were ignored. Keep the lane CI-safe:
+deterministic metric or local stand-in, no live LLM / no API key.
+
+| Candidate | Dep | Failure class | Notes |
+|-----------|-----|---------------|-------|
+| `rag_faithfulness` | ragas (or deepeval) | generator extrapolates beyond retrieved context (hallucination) | deepens `llm_eval`; Ragas `faithfulness` / `context_precision`; deterministic fixtures |
+| `geval_rubric` | deepeval (G-Eval) | output violates an explicit rubric step (tone/criteria drift) | hard-coded `evaluation_steps` for reproducibility |
+| `metamorphic_stability` | hypothesis | output swings under semantically-neutral prompt perturbations (ungrounded) — MetaQA pattern | pure-Hypothesis; oracle stable, buggy volatile; no model needed |
+
+Out of scope for this harness library (platform/agent work, not testing harnesses):
+agent protocols (MCP/A2A/ACP/SDE), orchestration stacks (LangGraph/CrewAI/AutoGen),
+and tracing (Arize Phoenix / OpenTelemetry — the `log.sh` JSONL is the lightweight
+stand-in already in `.claude/hooks/`).
+
 ## Notes
 - Integration harnesses run as a separate CI job (Docker); they stay off the fast lib lane.
 - The `ai` lane is in-process and deterministic; it runs alongside `lib` (no Docker, no key).
