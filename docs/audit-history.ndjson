@@ -1,0 +1,1 @@
+{"ts": "2026-06-14T04:40:51.171684+00:00", "base": "4e2cee943aa9b4a965a29a659e37648c942ed8d0", "head": "bd1914aee39dd5f49b5114f87b322662b7360807", "pr": 5, "findings": [{"id": "sensitive-paths", "sev": "medium"}, {"id": "unlogged-files", "sev": "low"}]}
