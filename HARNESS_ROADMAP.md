@@ -8,17 +8,19 @@ unused declarations), and ships a planted-bug proof test.
 ## Shipped
 - Batch 0 (scaffold): `lib/property_roundtrip` (Hypothesis), `integration/postgres_store`
   (testcontainers + psycopg).
+- Batch 1a (lib, this batch): `lib/schema_validation` (pydantic + polyfactory),
+  `lib/async_http_contract` (respx + httpx), `lib/temporal_logic` (time-machine).
 
 ## Batch 1 — lib (library-backed, in-process)
 Source: research T1 (testing-library ecosystem survey).
 
-| Candidate | Dep | Failure class |
-|-----------|-----|---------------|
-| `schema_validation` | pydantic + polyfactory | poison-payload / nested-type drift; polyfactory exhausts Union/Enum variants |
-| `async_http_contract` | respx | async connection-pool / retry / timeout flaws on httpx clients |
-| `temporal_logic` | time-machine | C-extension-safe time freezing (expiry, schedulers) |
-| `openapi_fuzz` | schemathesis | OpenAPI/GraphQL contract drift, server 500s, stateful bypasses (CLI harness) |
-| `mutation_quality` | mutmut | vacuous green — code executed by coverage but not asserted |
+| Candidate | Dep | Failure class | Status |
+|-----------|-----|---------------|--------|
+| `schema_validation` | pydantic + polyfactory | poison-payload / nested-type drift; polyfactory exhausts Union/Enum variants | ✅ shipped |
+| `async_http_contract` | respx | async connection-pool / retry / timeout flaws on httpx clients | ✅ shipped |
+| `temporal_logic` | time-machine | C-extension-safe time freezing (expiry, schedulers) | ✅ shipped |
+| `openapi_fuzz` | schemathesis | OpenAPI/GraphQL contract drift, server 500s, stateful bypasses (CLI harness) | planned (needs dedicated runner) |
+| `mutation_quality` | mutmut | vacuous green — code executed by coverage but not asserted | planned (needs dedicated runner) |
 
 ## Batch 2 — integration (real ephemeral services)
 Source: research T2 (CI integration testing). Each follows the testcontainers +
