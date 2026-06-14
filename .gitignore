@@ -16,8 +16,12 @@ venv/
 # Generated artifacts
 sbom.cdx.json
 *.sbom.json
+audit-report.md
 dist/
 build/
+
+# Agent runtime logs (PostToolUse log.sh)
+.claude/logs/
 
 # OS / editor
 .DS_Store

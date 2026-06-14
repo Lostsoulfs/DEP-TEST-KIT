@@ -16,6 +16,14 @@ dependencies = []
 # library-backed, in-process harnesses (no external services)
 lib = [
   "hypothesis>=6.130",
+  "pydantic>=2.7",
+  "polyfactory>=2.16",
+  "respx>=0.21",
+  "httpx>=0.27",
+  "time-machine>=2.14",
+  "mutmut>=3.2",
+  "schemathesis>=4.0",
+  "flask>=3.0",
 ]
 # real-service harnesses (spin ephemeral containers; need Docker at run time)
 integration = [
@@ -52,8 +60,9 @@ known_first_party = ["harnesses"]
 [tool.deptry.per_rule_ignores]
 # testcontainers + psycopg are used by the integration harness's fixtures and tests
 # (tests/integration), not imported in harnesses/ itself (the store uses the injected
-# connection); pytest-xdist is a pytest plugin, never imported directly.
-DEP002 = ["pytest-xdist", "testcontainers", "psycopg"]
+# connection); pytest-xdist is a pytest plugin, never imported directly; mutmut is a
+# CLI *runner* invoked via subprocess by the mutation-quality harness, never imported.
+DEP002 = ["pytest-xdist", "testcontainers", "psycopg", "mutmut"]
 
 [tool.ruff]
 line-length = 100

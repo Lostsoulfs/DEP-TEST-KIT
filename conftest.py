@@ -20,7 +20,9 @@ def _docker_available() -> bool:
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     if _docker_available():
         return
-    skip_integration = pytest.mark.skip(reason="Docker not available; integration harness needs a daemon")
+    skip_integration = pytest.mark.skip(
+        reason="Docker not available; integration harness needs a daemon"
+    )
     for item in items:
         if "integration" in item.keywords:
             item.add_marker(skip_integration)
