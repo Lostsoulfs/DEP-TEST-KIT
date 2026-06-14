@@ -18,6 +18,8 @@ unused declarations), and ships a planted-bug proof test.
   under a stalled upstream.
 - Batch 4 lib (security-leaning) — **complete**: `crypto_correctness` (cryptography),
   `secret_scanning` (detect-secrets), `sql_orm` (sqlalchemy), `retry_resilience` (tenacity).
+- Batch 4 integration (security-leaning) — **complete**: `vault_secrets` (hvac),
+  `elasticsearch_index` (elasticsearch), `rabbitmq_redelivery` (pika), `keycloak_oidc` (pyjwt).
 
 ## Batch 1 — lib (library-backed, in-process) ✅ complete
 Source: research T1 (testing-library ecosystem survey).
@@ -72,14 +74,14 @@ Source: extends Batches 1-3 toward auth / crypto / supply-chain failure classes.
 | sql_orm | sqlalchemy | ORM model dropped a UNIQUE constraint a mock can't enforce | ✅ shipped |
 | retry_resilience | tenacity | policy retries a permanent (non-retryable) error (CWE-754) | ✅ shipped |
 
-**integration (4) — staged** (next PR; testcontainers, needs Docker):
+**integration (4) — shipped** (testcontainers, needs Docker):
 
 | Candidate | Dep | Failure class | Status |
 |-----------|-----|---------------|--------|
-| vault_secrets | hvac | over-broad secret read — parent path vs single key (CWE-200) | staged |
-| elasticsearch_index | elasticsearch | missing-refresh read-after-write inconsistency | staged |
-| rabbitmq_redelivery | pika | auto-ack loses a message on processing failure (CWE-754) | staged |
-| keycloak_oidc | pyjwt | forged token accepted without signature verification (CWE-347) | staged |
+| vault_secrets | hvac | over-broad secret read — parent path vs single key (CWE-200) | ✅ shipped |
+| elasticsearch_index | elasticsearch | missing-refresh read-after-write inconsistency | ✅ shipped |
+| rabbitmq_redelivery | pika | auto-ack loses a message on processing failure (CWE-754) | ✅ shipped |
+| keycloak_oidc | pyjwt | forged token accepted without signature verification (CWE-347) | ✅ shipped |
 
 ## Batch 5 — ai (candidates, deferred)
 Source: research T7 ("AI Workflows, Cross-Talk, Tools, Errors"). Frameworks verified

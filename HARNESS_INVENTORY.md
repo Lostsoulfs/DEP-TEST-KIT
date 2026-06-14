@@ -1,6 +1,6 @@
 # Harness Inventory
 
-**Total: 19 harnesses** (10 lib, 7 integration, 2 ai). This repo grows in batches of ≤6;
+**Total: 23 harnesses** (10 lib, 11 integration, 2 ai). This repo grows in batches of ≤6;
 see `HARNESS_ROADMAP.md` for what's next. Every harness ships a paired test and a
 planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstring.
 
@@ -179,6 +179,38 @@ planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstr
 - **Proof:** under a Toxiproxy `timeout` toxic, the resilient client (`socket_timeout=0.5`)
   raises `redis.TimeoutError` fast; the fragile client (no timeout) blocks the full stall and
   then raises `redis.ConnectionError` when the proxy drops the connection.
+
+### vault_secrets — scoped vs over-broad KV-v2 read on ephemeral Vault
+- **File:** `harnesses/integration/vault_secrets_test_harness.py`
+- **Dep:** `hvac` · **Isolation:** one seeded KV-v2 secret per client fixture
+- **Why:** a mocked secret client returns only what you stub; a real Vault reveals an over-broad
+  read — returning every sibling key under a path instead of the one requested (CWE-200).
+- **Proof:** the buggy reader returns the whole secret dict (all keys) against real Vault; the
+  oracle returns just the requested value.
+
+### elasticsearch_index — read-after-write consistency on ephemeral Elasticsearch
+- **File:** `harnesses/integration/elasticsearch_index_test_harness.py`
+- **Dep:** `elasticsearch` (8.x client + server) · **Isolation:** index recreated per test
+- **Why:** Elasticsearch is near-real-time — a freshly indexed doc is not searchable until a
+  refresh; a mock answers instantly and hides the inconsistency.
+- **Proof:** the buggy store (no `refresh`) fails to find a just-indexed doc against real ES;
+  the oracle (`refresh="wait_for"`) finds it.
+
+### rabbitmq_redelivery — auto-ack message loss on ephemeral RabbitMQ
+- **File:** `harnesses/integration/rabbitmq_redelivery_test_harness.py`
+- **Dep:** `pika` · **Isolation:** a unique queue per test
+- **Why:** auto-ack acknowledges a message before processing, so a processing failure loses it;
+  a mock cannot model broker redelivery (CWE-754).
+- **Proof:** under an always-failing processor, the buggy (auto-ack) consumer leaves 0 messages
+  on the queue; the oracle (manual ack + nack/requeue) leaves it for redelivery (1).
+
+### keycloak_oidc — real OIDC signature verification on ephemeral Keycloak
+- **File:** `harnesses/integration/keycloak_oidc_test_harness.py`
+- **Dep:** `pyjwt[crypto]` · **Isolation:** session realm/client/user + minted real + forged tokens
+- **Why:** token validation is the most-mocked boundary; a verifier that skips the signature
+  check accepts forged tokens while every mock-backed test still passes (CWE-347).
+- **Proof:** against real Keycloak JWKS, the buggy verifier (`verify_signature=False`) accepts a
+  token signed by a rogue key; the oracle rejects it and accepts only the genuine RS256 token.
 
 ## ai (deterministic, in-process — no live LLM, no API key)
 
