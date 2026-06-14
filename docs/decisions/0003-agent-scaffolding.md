@@ -44,11 +44,8 @@ a gate to make itself green. `/audit-retro` stays manual and propose-only.
 Any agent working in this repo inherits the same self-audit path: hooks enforce
 formatting and block generated/secret edits mechanically, the auditor agent runs the
 deterministic + semantic + MoE review before every push, and outcomes are logged to
-`docs/LEARNINGS.md`. The CI-side `audit.yml` workflow runs the auditor on every PR and
-posts the report as a comment (report-only, so PR heads stay mergeable), and on push to
-`main` it appends `docs/audit-history.ndjson` and commits it with `[skip ci]` — feeding
-`/audit-retro` without held bot runs. (Per-PR auto-fix/history pushing was tried and
-reverted: GITHUB_TOKEN pushes create approval-held runs in this environment, which never
-satisfy the required status checks and brick PR merges — see `docs/LEARNINGS.md`.) On its
-first run the auditor caught real drift (unnecessary suppressions in Batch 1) — evidence
-the gate has teeth.
+`docs/LEARNINGS.md`. The CI-side `audit.yml` workflow runs the auditor on every PR,
+posts the report as a comment (report-only, so PR heads stay mergeable), and uploads the
+run's history line as a CI artifact for `/audit-retro` — it never pushes (see ADR-0004
+for why the two pushing variants were abandoned). On its first run the auditor caught
+real drift (unnecessary suppressions in Batch 1) — evidence the gate has teeth.

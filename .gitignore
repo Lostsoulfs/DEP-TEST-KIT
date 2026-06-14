@@ -23,6 +23,9 @@ build/
 # Agent runtime logs (PostToolUse log.sh)
 .claude/logs/
 
+# Drift-audit per-run history line (uploaded as a CI artifact, never committed)
+audit-history.ndjson
+
 # OS / editor
 .DS_Store
 *.swp
