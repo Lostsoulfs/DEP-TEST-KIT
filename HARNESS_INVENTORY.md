@@ -1,6 +1,6 @@
 # Harness Inventory
 
-**Total: 12 harnesses** (6 lib, 6 integration). This repo grows in batches of ≤6;
+**Total: 14 harnesses** (6 lib, 6 integration, 2 ai). This repo grows in batches of ≤6;
 see `HARNESS_ROADMAP.md` for what's next. Every harness ships a paired test and a
 planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstring.
 
@@ -128,6 +128,27 @@ planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstr
   consumer joined — a data-loss bug a mock broker can't model.
 - **Proof:** the buggy (`latest`) reader receives nothing for a pre-existing message;
   the correct (`earliest`) reader replays it.
+
+## ai (deterministic, in-process — no live LLM, no API key)
+
+### agentic_pbt — agent-inferred properties via Hypothesis
+- **File:** `harnesses/ai/agentic_pbt_test_harness.py`
+- **Dep:** `hypothesis`
+- **Why:** the Anthropic "PBT with Claude" pattern infers properties from a function's
+  name/contract and finds bugs no example was written for. Here the inferred properties
+  (idempotence + a postcondition) are pinned and Hypothesis falsifies a violating impl.
+- **Proof:** `buggy_ensure_prefix` (always prepends) satisfies the postcondition but
+  breaks idempotence (`f(f("a")) == "ID_ID_a"`); the oracle holds.
+
+### llm_eval — hallucination detection via deepeval
+- **File:** `harnesses/ai/llm_eval_test_harness.py`
+- **Dep:** `deepeval`
+- **Why:** an LLM answer can't be checked with `==`; the failure class is the
+  hallucination (a claim ungrounded in context). A deterministic deepeval `BaseMetric`
+  scores faithfulness so the lane needs no API key.
+- **Proof:** the "Eiffel Tower is in Berlin" answer scores 0.0 and is caught; the
+  grounded answer scores 1.0 and passes. Deterministic metric stands in for the LLM
+  judge (deviation noted in `docs/LEARNINGS.md`).
 
 ## Convention
 See `template/harness_template.py` for the shape and `docs/decisions/0001-stack-decisions.md`

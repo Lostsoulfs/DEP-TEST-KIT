@@ -36,6 +36,12 @@ integration = [
   "minio>=7.2",
   "confluent-kafka>=2.5",
 ]
+# AI-output / agentic-testing harnesses (in-process, deterministic — no live LLM,
+# no API key; an LLM judge is stood in for so the lane stays CI-safe).
+ai = [
+  "hypothesis>=6.130",
+  "deepeval>=2.0",
+]
 
 # PEP 735 dev tooling — not runtime, not scanned as harness imports.
 [dependency-groups]

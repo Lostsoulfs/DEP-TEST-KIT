@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-FLAVORS = ("lib", "integration")
+FLAVORS = ("lib", "integration", "ai")
 
 
 def sh(cmd: list[str]) -> str:

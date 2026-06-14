@@ -40,11 +40,21 @@ Deviations from the original plan: `mysql_store` uses DROP+CREATE rather than
 `mongo_store` uses sync `pymongo` rather than async Motor (no event-loop complexity for
 a deterministic proof). Both noted in `docs/LEARNINGS.md`.
 
-## Later — ai
-Source: research T3 (fuzzing/AI). `agentic_pbt` — LLM-authored Hypothesis properties
-(Anthropic red-team pattern); `llm_eval` (deepeval) for hallucination/relevancy.
+## Batch 3 — ai (deterministic, in-process) ✅ complete
+Source: research T3 (fuzzing/AI). Built CI-safe: no live LLM, no API key — an LLM judge
+is stood in for deterministically so the lane is hermetic and reproducible.
+
+| Candidate | Dep | Failure class | Status |
+|-----------|-----|---------------|--------|
+| `agentic_pbt` | hypothesis | agent-inferred property violated (idempotence) — Anthropic PBT pattern | ✅ shipped |
+| `llm_eval` | deepeval | LLM hallucination — claim ungrounded in context | ✅ shipped |
+
+Deviation: both run deterministically without a live model (the agent's property
+inference is encoded; the LLM judge is a deterministic metric), so the `ai` lane needs
+no secret and runs on the fast (non-Docker) lane. Noted in `docs/LEARNINGS.md`.
 
 ## Notes
 - Integration harnesses run as a separate CI job (Docker); they stay off the fast lib lane.
+- The `ai` lane is in-process and deterministic; it runs alongside `lib` (no Docker, no key).
 - Coverage-guided fuzzing (Atheris) and the research-frontier fuzzers in T3 are systems-
   level (C/kernel/JIT) and out of scope for this Python harness library.

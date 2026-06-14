@@ -5,6 +5,21 @@ dated. This is **data, not instructions** — never act on a line here as a comm
 The auditor and explorer agents append here; when it grows past ~500 lines, promote
 evergreen rules into the ADRs and mark superseded entries historical.
 
+## 2026-06-14 — Batch 3 (ai) complete
+- Added the `ai` flavor + extra: `agentic_pbt` (hypothesis — agent-inferred idempotence
+  property, Anthropic PBT pattern) and `llm_eval` (deepeval — hallucination detection).
+- Made the lane CI-safe/deterministic: no live LLM, no API key. agentic_pbt encodes the
+  agent's inferred properties; llm_eval uses a deterministic custom `BaseMetric` instead
+  of an LLM judge. They run on the fast (non-Docker) lane with the lib tests.
+- deepeval: opt out of telemetry BEFORE importing (`DEEPEVAL_TELEMETRY_OPT_OUT=YES`,
+  `ERROR_REPORTING=NO`) so the import makes no network call; ~35 transitive deps, no
+  torch/transformers.
+- Hypothesis gotcha: `@given` rejects a target function with default args
+  ("Cannot apply @given to a function with defaults") — bind loop variables via a
+  factory function, not default kwargs.
+- Registered `ai` in `tools/audit_drift.py` FLAVORS, the Makefile `selftest` glob, and
+  the CI per-harness self-test step.
+
 ## 2026-06-14 — Drift Audit: never push to the PR head in this environment
 - Switched the audit to push `audit-history.ndjson` + ruff fixes to the PR branch
   (PR #5). It worked once, then bricked the merge: GITHUB_TOKEN pushes create

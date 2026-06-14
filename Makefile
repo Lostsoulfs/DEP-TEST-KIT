@@ -20,8 +20,8 @@ deptry:          ## unused/missing dependency scan
 audit:           ## OSV vulnerability audit of the locked graph
 	uv audit --preview-features audit
 
-selftest:        ## per-harness self-tests (all lib harnesses)
-	@for h in harnesses/lib/*_test_harness.py; do \
+selftest:        ## per-harness self-tests (in-process lib + ai harnesses)
+	@for h in harnesses/lib/*_test_harness.py harnesses/ai/*_test_harness.py; do \
 		echo "--- $$h"; \
 		uv run --frozen python "$$h" --self-test || exit 1; \
 	done
