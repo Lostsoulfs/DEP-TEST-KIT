@@ -42,6 +42,8 @@ jobs:
           uv run --frozen python harnesses/lib/schema_validation_test_harness.py --self-test
           uv run --frozen python harnesses/lib/async_http_contract_test_harness.py --self-test
           uv run --frozen python harnesses/lib/temporal_logic_test_harness.py --self-test
+          uv run --frozen python harnesses/lib/mutation_quality_test_harness.py --self-test
+          uv run --frozen python harnesses/lib/openapi_fuzz_test_harness.py --self-test
 
   supply-chain:
     name: Audit + SBOM

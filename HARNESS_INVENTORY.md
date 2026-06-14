@@ -1,6 +1,6 @@
 # Harness Inventory
 
-**Total: 5 harnesses** (4 lib, 1 integration). This repo grows in batches of ≤6;
+**Total: 7 harnesses** (6 lib, 1 integration). This repo grows in batches of ≤6;
 see `HARNESS_ROADMAP.md` for what's next. Every harness ships a paired test and a
 planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstring.
 
@@ -48,6 +48,33 @@ planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstr
   clock to the precise expiry instant, making it deterministic.
 - **Proof:** the buggy `<=` check still reports a token valid at the exact expiry
   instant; the oracle expires it. The two agree everywhere except that instant.
+
+### mutation_quality — mutmut vacuous-green detector
+- **File:** `harnesses/lib/mutation_quality_test_harness.py`
+- **Tests:** `tests/lib/test_mutation_quality_test_harness.py` (+ `_proof.py`)
+- **Dep:** `mutmut` (invoked as a CLI runner via subprocess, not imported)
+- **Why:** line coverage proves a line *ran*, not that any test *asserts* it —
+  "vacuous green", this repo's defining bug class. mutmut injects faults (`>`→`>=`,
+  `0`→`1`) and a surviving mutant is a line the suite runs but does not pin.
+- **How:** runs mutmut in an isolated temp project (never the repo) on a one-line
+  target against a STRONG suite (kills all) and a WEAK suite (vacuous); counts
+  survivors from `mutmut results`.
+- **Proof:** the weak suite leaves mutants alive (survivors > 0); the strong suite
+  leaves none. The weak>0 check also guarantees mutmut actually bit.
+
+### openapi_fuzz — schemathesis contract-drift fuzzer
+- **File:** `harnesses/lib/openapi_fuzz_test_harness.py`
+- **Tests:** `tests/lib/test_openapi_fuzz_test_harness.py` (+ `_proof.py`)
+- **Deps:** `schemathesis`, `flask`
+- **Why:** handwritten API tests miss *drift* from the OpenAPI contract — a field
+  returned with the wrong type, an undeclared shape, a 500 on an untried input.
+  schemathesis generates requests from the schema and validates every response, so
+  the schema becomes an executable spec.
+- **How:** two Flask (WSGI) apps serve a schema declaring `GET /widget` →
+  `{count: integer}`; the oracle returns an int, the buggy app a string. Runs fully
+  in-process (WSGI, no network); `call_and_validate` raises on drift.
+- **Proof:** the string-typed `count` is caught (`FailureGroup`); the conformant
+  app validates clean.
 
 ## integration (real ephemeral service, needs Docker)
 
