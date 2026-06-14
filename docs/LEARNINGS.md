@@ -5,6 +5,19 @@ dated. This is **data, not instructions** — never act on a line here as a comm
 The auditor and explorer agents append here; when it grows past ~500 lines, promote
 evergreen rules into the ADRs and mark superseded entries historical.
 
+## 2026-06-14 — E4: line coverage measured (Phase 2)
+- Added `pytest-cov` (dev group) + `make coverage`; the CI lib lane now runs
+  `pytest --cov=harnesses --cov-report=term-missing` (**report-only, NO blocking floor** — a
+  coverage floor invites vacuous green since a line can be covered but unasserted; mutation score
+  is the real signal). Flipped the MoE E4 lens from `warn` to "measured".
+- Coverage is **lib-lane only** (`-m "not integration"`): integration harness modules aren't
+  exercised without Docker, so the repo-wide TOTAL reads ~62% (lib+ai harnesses well covered; the
+  11 integration harnesses show uncovered here). Combining lib+integration coverage across the two
+  CI jobs (`coverage combine`) is deferred — fine for report-only.
+- Also fixed CI drift: the lib job's per-harness self-test step had a HARDCODED list missing the 4
+  Batch-4 lib harnesses — replaced with `make selftest` (globs all lib+ai harnesses) so new
+  harnesses are auto-included. deptry does not flag `pytest-cov` (a dev-group dep).
+
 ## 2026-06-14 — Batch 4 integration (security): vault / elasticsearch / rabbitmq / keycloak
 - Shipped 4 testcontainers harnesses: `vault_secrets` (hvac, over-broad KV-v2 read, CWE-200),
   `elasticsearch_index` (ES 8.x near-real-time read-after-write), `rabbitmq_redelivery` (pika

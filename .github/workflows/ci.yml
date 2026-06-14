@@ -34,18 +34,10 @@ jobs:
         run: uv run ruff check .
       - name: Unused/missing dependency scan
         run: uv run deptry harnesses
-      - name: Lib lane (no Docker)
-        run: uv run --frozen pytest -m "not integration" -q
-      - name: Per-harness self-tests
-        run: |
-          uv run --frozen python harnesses/lib/property_roundtrip_test_harness.py --self-test
-          uv run --frozen python harnesses/lib/schema_validation_test_harness.py --self-test
-          uv run --frozen python harnesses/lib/async_http_contract_test_harness.py --self-test
-          uv run --frozen python harnesses/lib/temporal_logic_test_harness.py --self-test
-          uv run --frozen python harnesses/lib/mutation_quality_test_harness.py --self-test
-          uv run --frozen python harnesses/lib/openapi_fuzz_test_harness.py --self-test
-          uv run --frozen python harnesses/ai/agentic_pbt_test_harness.py --self-test
-          uv run --frozen python harnesses/ai/llm_eval_test_harness.py --self-test
+      - name: Lib lane (no Docker) + coverage (report-only)
+        run: uv run --frozen pytest -m "not integration" -q --cov=harnesses --cov-report=term-missing
+      - name: Per-harness self-tests (all lib + ai harnesses)
+        run: make selftest
 
   supply-chain:
     name: Audit + SBOM

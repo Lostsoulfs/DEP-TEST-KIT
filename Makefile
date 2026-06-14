@@ -1,12 +1,15 @@
 # DEP-TEST-KIT — common tasks. Everything runs through uv for a locked, reproducible env.
 
-.PHONY: sync test test-int lint deptry audit selftest mutation sbom all review
+.PHONY: sync test coverage test-int lint deptry audit selftest mutation sbom all review
 
 sync:            ## provision the locked environment (all extras)
 	uv sync --locked --all-extras
 
 test:            ## fast lib lane (no Docker)
 	uv run --frozen pytest -m "not integration" -q
+
+coverage:        ## line coverage on harnesses/ (report-only; no blocking floor yet)
+	uv run --frozen pytest -m "not integration" --cov=harnesses --cov-report=term-missing
 
 test-int:        ## real-service lane (needs Docker)
 	uv run --frozen pytest -m integration -q

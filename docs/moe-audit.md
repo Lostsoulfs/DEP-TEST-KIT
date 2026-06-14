@@ -29,10 +29,13 @@ output, a diff reference, or a cited URL — never an unbacked claim.
 - Spot-check: would the proof fail if oracle and buggy were swapped? If not, the proof
   is vacuous.
 
-### E4 — Coverage / mutation (warn now, blocking once tooling lands)
+### E4 — Coverage / mutation (line coverage measured; mutation advisory)
 - Is efficacy measured repo-wide, not just asserted per harness?
-- Target state: `pytest-cov` on `harnesses/` + a scoped mutmut pass over the harness
-  tests (dogfooding `mutation_quality`). Until then, record the gap as `warn`.
+- **Line coverage:** `pytest-cov` on `harnesses/` runs in CI (lib lane) and via `make coverage`.
+  Report-only — no blocking floor yet, on purpose: a coverage floor invites vacuous green
+  (a line can be covered but unasserted), so mutation score, not line %, is the real signal.
+- **Mutation:** the advisory `mutation.yml` lane + the `mutation_quality` harness dogfood mutmut;
+  a scoped per-harness mutation gate stays deferred (mutmut 3.x trampoline, ADR-0006).
 
 ### E5 — Supply-chain (blocking)
 - `uv sync --locked`, `deptry harnesses`, `uv audit` all clean (from step 0).
