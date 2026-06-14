@@ -104,8 +104,11 @@ def run_self_test() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="LLM hallucination-eval harness (deepeval)")
-    parser.add_argument("--self-test", action="store_true")
-    parser.parse_args(argv)
+    parser.add_argument("--self-test", action="store_true", help="run the planted-bug self-test")
+    args = parser.parse_args(argv)
+    if not args.self_test:
+        parser.print_help(sys.stderr)
+        return 2
     return run_self_test()
 
 
