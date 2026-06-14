@@ -74,15 +74,11 @@ def count_survivors(test_src: str) -> int:
         (proj / "target.py").write_text(TARGET_SRC)
         (proj / "test_target.py").write_text(test_src)
         (proj / "setup.cfg").write_text("[mutmut]\nsource_paths=target.py\n")
-        subprocess.run(
-            [_MUTMUT, "run"], cwd=proj, capture_output=True, text=True, timeout=180
-        )
+        subprocess.run([_MUTMUT, "run"], cwd=proj, capture_output=True, text=True, timeout=180)
         results = subprocess.run(
             [_MUTMUT, "results"], cwd=proj, capture_output=True, text=True, timeout=60
         )
-    return sum(
-        1 for line in results.stdout.splitlines() if line.strip().endswith(": survived")
-    )
+    return sum(1 for line in results.stdout.splitlines() if line.strip().endswith(": survived"))
 
 
 def run_self_test() -> int:

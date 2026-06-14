@@ -67,11 +67,11 @@ def _make_app(count_value: Any) -> Flask:
     app = Flask(__name__)
 
     @app.get("/openapi.json")
-    def spec() -> Any:  # noqa: ANN401
+    def spec():
         return jsonify(SCHEMA)
 
     @app.get("/widget")
-    def widget() -> Any:  # noqa: ANN401
+    def widget():
         return jsonify({"count": count_value})
 
     return app
@@ -86,7 +86,7 @@ def conforms_to_contract(count_value: Any) -> bool:
 
     @settings(max_examples=10, deadline=None, suppress_health_check=list(HealthCheck))
     @given(case=operation.as_strategy())
-    def run(case: Any) -> None:  # noqa: ANN401
+    def run(case):
         case.call_and_validate()
 
     try:

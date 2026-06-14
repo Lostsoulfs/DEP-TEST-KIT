@@ -16,6 +16,7 @@ inspected, so removing a secret never trips the gate.
 Escape hatch: a line containing the marker  allowlist secret  is skipped. One-off
 bypass for an intentional commit:  git commit --no-verify  (use sparingly).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -111,10 +112,10 @@ def _run_self_test() -> int:
     must_block = [aws, ghp, pem, slack, gkey, generic]
 
     must_clean = [
-        "this line mentions an api_key in passing",      # keyword, no value
-        "uses ${{ secrets.GITHUB_TOKEN }} in CI",        # CI ref, not a literal
+        "this line mentions an api_key in passing",  # keyword, no value
+        "uses ${{ secrets.GITHUB_TOKEN }} in CI",  # CI ref, not a literal
         "a normal line of prose about tokens",
-        aws + "  " + _ALLOWLIST_MARKER,                   # escape hatch
+        aws + "  " + _ALLOWLIST_MARKER,  # escape hatch
     ]
 
     fails = 0

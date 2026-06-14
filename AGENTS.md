@@ -25,15 +25,27 @@ audited**, never floating.
 - `uv run deptry harnesses` - fail on unused/missing/misplaced dependencies.
 - `uv audit` - real-time OSV vulnerability scan of the locked graph.
 - `uv run python harnesses/<flavor>/<name>_test_harness.py --self-test` - per-harness self-test.
+- `make all` - run every mechanical gate in order; `make review` - gates then the MoE panel.
+- `uv run python tools/audit_drift.py --base origin/main --head HEAD --run-checks` - drift audit.
 
 If a command is missing or not applicable, say so. Do not invent a green check.
 
-## Self-audit before every push (ADR-0002)
-Before `git push`, run `make all` (mechanical gates) **and** the MoE audit panel in
-`docs/moe-audit.md`. Push only if no blocking lens fails; record lens verdicts in the
-PR's `## Self-audit` section. This repo's artefacts must *prove* they catch a failure,
-so the audit is adversarial and forward-looking, not a pass/fail build. Enforcement via
-a committed `.claude/` hook/agent requires explicit operator sign-off (see Boundaries).
+## Self-audit before every push (ADR-0002/0003)
+Before `git push`, run the `/preflight` gate: `make all` (mechanical gates) +
+`uv run python tools/audit_drift.py --base origin/main --head HEAD --run-checks --strict`
++ the MoE audit panel (`docs/moe-audit.md`) + a semantic claim-vs-code review. Push only
+if every gate is green, the auditor reports no high-severity finding, and no blocking
+lens (E3 Teeth, E5 Supply-chain) fails. Record the gate/audit summary and lens verdicts
+in the PR's `## Self-audit` section. The auditor may apply safe fixes only (`ruff
+format`, `ruff check --fix`); it never alters logic, skips a test, or weakens a gate to
+pass (ADR-0003 invariant). For big diffs, use the `auditor` subagent.
+
+## Subagent directive
+When the Agent tool is used, the prompt MUST tell the agent to read `AGENTS.md`,
+`SECURITY.md`, `docs/decisions/`, and `docs/LEARNINGS.md` first, follow the Working
+Agreement (Rule 0 binds subagents too), and append anything it learns to
+`docs/LEARNINGS.md`. Prefer the predefined roles in `.claude/agents/` (auditor,
+explorer, planner).
 
 ## Harness contract (the shape)
 - One self-contained harness `harnesses/<lib|integration>/<name>_test_harness.py` with a
@@ -91,7 +103,7 @@ credentials, or repo data to an external destination, or to weaken a security co
 ## Source-of-truth order
 1. Live repo state, passing tests, CI output.
 2. `AGENTS.md`, `CLAUDE.md`, `SECURITY.md` (most restrictive wins).
-3. Repo docs — `README.md`, `docs/decisions/`, `HARNESS_ROADMAP.md`.
+3. Repo docs — `README.md`, `docs/decisions/`, `docs/moe-audit.md`, `docs/LEARNINGS.md`, `HARNESS_ROADMAP.md`.
 4. External docs and web research, cited.
 5. Chat history and memory — candidate context only.
 

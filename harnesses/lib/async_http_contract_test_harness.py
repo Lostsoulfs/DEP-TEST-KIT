@@ -72,7 +72,7 @@ def _one_fault_then_ok(fault: object) -> Callable[[httpx.Request], httpx.Respons
         if i == 0:
             if isinstance(fault, Exception):
                 raise fault
-            return fault  # type: ignore[return-value]  # an httpx.Response
+            return fault  # an httpx.Response
         return httpx.Response(200, text="ok")
 
     return handler
