@@ -1,6 +1,6 @@
 # Harness Inventory
 
-**Total: 7 harnesses** (6 lib, 1 integration). This repo grows in batches of ≤6;
+**Total: 12 harnesses** (6 lib, 6 integration). This repo grows in batches of ≤6;
 see `HARNESS_ROADMAP.md` for what's next. Every harness ships a paired test and a
 planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstring.
 
@@ -91,6 +91,43 @@ planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstr
   pristine, near-zero-latency isolation.
 - **Proof:** the buggy store (UNIQUE dropped from its DDL) writes a duplicate against
   real PostgreSQL (count == 2); the correct store raises `UniqueViolation`.
+
+### redis_cache — real TTL on ephemeral Redis
+- **File:** `harnesses/integration/redis_cache_test_harness.py`
+- **Dep:** `redis` · **Isolation:** logical DB index per xdist worker
+- **Why:** a mock has no TTL; a cache that writes a plain SET (no expiry) passes every
+  mock test and leaks stale data forever.
+- **Proof:** the buggy cache's key reports `TTL == -1` (no expiry) against real Redis;
+  the correct one reports a positive TTL.
+
+### mysql_store — real utf8mb3/utf8mb4 charset width on ephemeral MySQL
+- **File:** `harnesses/integration/mysql_store_test_harness.py`
+- **Dep:** `pymysql` · **Isolation:** DROP+CREATE per test (MySQL DDL auto-commits)
+- **Why:** `utf8`/`utf8mb3` can't hold 4-byte characters; only a real MySQL enforces it.
+- **Proof:** the buggy (utf8mb3) store raises a MySQL error on a 4-byte char; the
+  correct (utf8mb4) store round-trips it.
+
+### mongo_store — real unique index on ephemeral MongoDB
+- **File:** `harnesses/integration/mongo_store_test_harness.py`
+- **Dep:** `pymongo` · **Isolation:** logical database per xdist worker
+- **Why:** Mongo stores duplicates unless a unique index exists; a mock can't enforce one.
+- **Proof:** the buggy store (no index) ends with two documents; the correct store
+  raises `DuplicateKeyError`.
+
+### object_store — real S3 byte round-trip on ephemeral MinIO
+- **File:** `harnesses/integration/object_store_test_harness.py`
+- **Deps:** `boto3`, `minio` · **Isolation:** unique bucket per test
+- **Why:** a mock hands your `str` back; only a real round-trip exposes corrupt bytes.
+- **Proof:** the buggy store writes Latin-1 bytes that raise `UnicodeDecodeError` when
+  read back under the UTF-8 contract; the correct store round-trips the text.
+
+### kafka_stream — real consumer offset-reset on ephemeral Kafka (KRaft)
+- **File:** `harnesses/integration/kafka_stream_test_harness.py`
+- **Dep:** `confluent-kafka` · **Isolation:** unique topic + consumer group per test
+- **Why:** `auto.offset.reset=latest` silently drops messages produced before the
+  consumer joined — a data-loss bug a mock broker can't model.
+- **Proof:** the buggy (`latest`) reader receives nothing for a pre-existing message;
+  the correct (`earliest`) reader replays it.
 
 ## Convention
 See `template/harness_template.py` for the shape and `docs/decisions/0001-stack-decisions.md`

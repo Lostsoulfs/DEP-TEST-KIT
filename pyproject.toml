@@ -29,6 +29,12 @@ lib = [
 integration = [
   "testcontainers>=4.14",
   "psycopg[binary]>=3.2",
+  "redis>=5.0",
+  "pymysql>=1.1",
+  "pymongo>=4.7",
+  "boto3>=1.34",
+  "minio>=7.2",
+  "confluent-kafka>=2.5",
 ]
 
 # PEP 735 dev tooling — not runtime, not scanned as harness imports.
@@ -58,11 +64,15 @@ markers = [
 # deptry scans the `harnesses/` package; pytest plugins are never imported directly.
 known_first_party = ["harnesses"]
 [tool.deptry.per_rule_ignores]
-# testcontainers + psycopg are used by the integration harness's fixtures and tests
-# (tests/integration), not imported in harnesses/ itself (the store uses the injected
-# connection); pytest-xdist is a pytest plugin, never imported directly; mutmut is a
-# CLI *runner* invoked via subprocess by the mutation-quality harness, never imported.
-DEP002 = ["pytest-xdist", "testcontainers", "psycopg", "mutmut"]
+# Integration service clients (testcontainers, psycopg, redis, pymysql, pymongo, boto3,
+# confluent-kafka) are used by the integration fixtures/tests (tests/integration), not
+# imported in harnesses/ itself (each store/harness takes an injected client);
+# pytest-xdist is a pytest plugin, never imported directly; mutmut is a CLI *runner*
+# invoked via subprocess by the mutation-quality harness, never imported.
+DEP002 = [
+  "pytest-xdist", "testcontainers", "psycopg", "mutmut",
+  "redis", "pymysql", "pymongo", "boto3", "minio", "confluent-kafka",
+]
 
 [tool.ruff]
 line-length = 100

@@ -9,12 +9,21 @@ CI's dedicated Docker job runs the full set.
 from __future__ import annotations
 
 import shutil
+import subprocess
 
 import pytest
 
 
 def _docker_available() -> bool:
-    return shutil.which("docker") is not None
+    # The binary alone isn't enough — a daemon must answer, or testcontainers errors
+    # out instead of the tests being skipped. `docker info` returns 0 only when the
+    # daemon is reachable (true in CI's integration job, false on a daemonless box).
+    if shutil.which("docker") is None:
+        return False
+    try:
+        return subprocess.run(["docker", "info"], capture_output=True, timeout=15).returncode == 0
+    except Exception:
+        return False
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:

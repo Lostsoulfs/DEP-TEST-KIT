@@ -23,17 +23,22 @@ Source: research T1 (testing-library ecosystem survey).
 | `openapi_fuzz` | schemathesis | OpenAPI/GraphQL contract drift, server 500s (in-process WSGI runner) | ✅ shipped |
 | `mutation_quality` | mutmut | vacuous green — code executed by coverage but not asserted (CLI runner) | ✅ shipped |
 
-## Batch 2 — integration (real ephemeral services)
+## Batch 2 — integration (real ephemeral services) ✅ complete
 Source: research T2 (CI integration testing). Each follows the testcontainers +
 `pytest-xdist` pattern; isolation per service as noted.
 
-| Candidate | Service | Isolation |
-|-----------|---------|-----------|
-| `redis_cache` | Redis | logical DB-index per xdist worker |
-| `kafka_stream` | Kafka (KRaft) / Redpanda | per-test topic namespacing |
-| `mysql_store` | MySQL | `initdb.d` seed + transactional rollback |
-| `mongo_store` | MongoDB | per-worker logical database, async (Motor) |
-| `object_store` | MinIO (S3) | per-test bucket |
+| Candidate | Service | Isolation | Status |
+|-----------|---------|-----------|--------|
+| `redis_cache` | Redis | logical DB-index per xdist worker | ✅ shipped |
+| `kafka_stream` | Kafka (KRaft) | per-test topic + consumer group | ✅ shipped |
+| `mysql_store` | MySQL | DROP+CREATE per test (DDL auto-commits) | ✅ shipped |
+| `mongo_store` | MongoDB | per-worker logical database | ✅ shipped |
+| `object_store` | MinIO (S3) | per-test bucket | ✅ shipped |
+
+Deviations from the original plan: `mysql_store` uses DROP+CREATE rather than
+`initdb.d` seed + rollback (MySQL DDL auto-commits, so rollback can't undo a table);
+`mongo_store` uses sync `pymongo` rather than async Motor (no event-loop complexity for
+a deterministic proof). Both noted in `docs/LEARNINGS.md`.
 
 ## Later — ai
 Source: research T3 (fuzzing/AI). `agentic_pbt` — LLM-authored Hypothesis properties
