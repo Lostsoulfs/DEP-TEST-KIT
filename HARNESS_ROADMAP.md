@@ -109,6 +109,10 @@ and tracing (Arize Phoenix / OpenTelemetry — the `log.sh` JSONL is the lightwe
 stand-in already in `.claude/hooks/`).
 
 ## Notes
+- **Batch naming:** a batch number is assigned when its harnesses ship and is never reused or
+  retroactively reassigned. A harness added on its own (outside a planned batch) is labeled
+  **Standalone** (e.g. `network_chaos`), not folded into a batch number after the fact — this
+  avoids the "Batch 4 means two different things" overload seen earlier.
 - Integration harnesses run as a separate CI job (Docker); they stay off the fast lib lane.
 - The `ai` lane is in-process and deterministic; it runs alongside `lib` (no Docker, no key).
 - Coverage-guided fuzzing (Atheris) and the research-frontier fuzzers in T3 are systems-
