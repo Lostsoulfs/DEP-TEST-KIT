@@ -1,6 +1,6 @@
 # Harness Inventory
 
-**Total: 27 harnesses** (10 lib, 11 integration, 6 ai). This repo grows in batches of ≤6;
+**Total: 29 harnesses** (12 lib, 11 integration, 6 ai). This repo grows in batches of ≤6;
 see `HARNESS_ROADMAP.md` for what's next. Every harness ships a paired test and a
 planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstring.
 
@@ -115,6 +115,31 @@ planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstr
   failure that can never succeed (CWE-754).
 - **Proof:** the buggy policy attempts a permanent error `MAX_ATTEMPTS` times; the oracle
   (retry only `TransientError`) attempts it exactly once.
+
+### jwt_alg_confusion — algorithm-confusion rejection (PyJWT + cryptography)
+- **File:** `harnesses/lib/jwt_alg_confusion_test_harness.py`
+- **Tests:** `tests/lib/test_jwt_alg_confusion_test_harness.py` (+ `_proof.py`)
+- **Dep:** `pyjwt[crypto]` (in-process; the in-process sibling of `keycloak_oidc`, no Docker)
+- **Why:** `keycloak_oidc` proves a verifier must check the signature *at all*; it does not
+  prove the subtler attack — algorithm confusion. An attacker signs HS256 with the RSA
+  **public** key (which is public by design), or sends `alg=none`, and a verifier that trusts
+  the token's own `alg` accepts the forgery (CWE-347 / CVE-2026-48526). This is the harness the
+  `pyjwt[crypto]>=2.13` floor exists for.
+- **Proof:** the strict verifier (`algorithms=["RS256"]`) rejects both an `alg=none` token and an
+  HS256-with-public-key forgery; the confused-deputy verifier accepts both. A floor check pins
+  that PyJWT >=2.13 refuses an RSA PEM as an HMAC secret even when HS256 is allowed.
+
+### rbac_authz_differential — model-based authorization differential (Hypothesis)
+- **File:** `harnesses/lib/rbac_authz_differential_test_harness.py`
+- **Tests:** `tests/lib/test_rbac_authz_differential_test_harness.py` (+ `_proof.py`)
+- **Dep:** `hypothesis`
+- **Why:** example-based authz tests miss the (resource, action) cases nobody wrote — a check
+  that grants on the resource but drops the action lets a viewer's *read* become *write*. The
+  Cedar/Lean verification-guided-development pattern keeps a tiny ground-truth REFERENCE
+  authorizer and asserts the implementation agrees across randomly generated policies/requests.
+- **Proof:** the differential oracle finds a request where the action-ignoring authorizer grants
+  what the reference denies (read→write escalation), shrunk to a minimal case; the correct
+  implementation agrees with the reference on every generated input.
 
 ## integration (real ephemeral service, needs Docker)
 
