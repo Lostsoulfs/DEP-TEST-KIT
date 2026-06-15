@@ -38,3 +38,18 @@ gate:
 - The advisory lane never blocks merges; promote to required only once an incremental
   per-harness runner exists.
 - Local mutation runs need Linux/WSL on a Windows box (documented on `make mutation`).
+
+## Update (2026-06-15) — the deferred per-harness runner now ships, without mutmut
+The deferred "mutate each harness' oracle, run its tests" gate is delivered by
+`tools/vacuity_gate.py` using a DIFFERENT mechanism that sidesteps the two mutmut blockers:
+it monkeypatches each harness's declared `VACUITY_TARGETS` oracle symbol to an inert
+stand-in in a subprocess, re-runs the harness's `run_self_test()`, and asserts it goes red
+(`TEETH`); a harness that stays green is `VACUOUS` (blocking). Because it never invokes mutmut,
+it runs on native Windows and on package-prefixed modules — the exact constraints that blocked
+the original plan. The gate proves itself on two fixtures (a real harness that must read TEETH,
+a vacuous one that must be detected) via `--self-test`.
+- Rollout is **advisory** (`.github/workflows/vacuity.yml`, `continue-on-error`) while
+  `VACUITY_TARGETS` is added across all lib+ai harnesses; harnesses without it report `UNMAPPED`.
+  Promote to required once no lib+ai harness is `UNMAPPED`.
+- `mutation_quality` (the mutmut harness) stays as-is — it remains the real-mutmut signal on
+  Linux/WSL; the vacuity gate is the complementary cross-platform per-harness teeth check.

@@ -1,0 +1,35 @@
+name: Vacuity (advisory)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: vacuity-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  vacuity:
+    name: Vacuous-green meta-gate (advisory, non-blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Advisory while VACUITY_TARGETS rolls out across all lib+ai harnesses (ADR-0006).
+    # Promote to required once every mapped harness reads TEETH (no UNMAPPED in the lib+ai set).
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - run: uv python install 3.12
+      - name: Provision lib + ai env
+        run: uv sync --locked --extra lib --extra ai
+      - name: Vacuous-green meta-gate
+        run: make vacuity

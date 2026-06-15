@@ -35,6 +35,9 @@ from hypothesis import strategies as st
 
 PREFIX = "ID_"
 
+# Symbol the vacuous-green meta-gate (tools/vacuity_gate.py) neuters to confirm teeth.
+VACUITY_TARGETS = ["ensure_prefix"]
+
 
 # --- ORACLE: prefix only when absent (idempotent) -------------------------------
 def ensure_prefix(s: str, prefix: str = PREFIX) -> str:
