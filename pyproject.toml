@@ -28,6 +28,10 @@ lib = [
   "detect-secrets>=1.5",
   "sqlalchemy>=2.0",
   "tenacity>=9.0",
+  # >=2.13: fixes PyJWT algorithm-confusion CVE-2026-48526 + alg allow-list bypass
+  # CVE-2026-48523. The jwt_alg_confusion harness proves this floor rejects an
+  # HS256-with-RSA-public-key forgery and alg=none (also used by integration/keycloak_oidc).
+  "pyjwt[crypto]>=2.13",
 ]
 # real-service harnesses (spin ephemeral containers; need Docker at run time)
 integration = [
