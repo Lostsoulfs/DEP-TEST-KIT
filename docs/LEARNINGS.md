@@ -22,6 +22,70 @@ evergreen rules into the ADRs and mark superseded entries historical.
   (mutmut on Windows). Inventory 26→27 (11 lib). Branched off `origin/main` (independent of the
   unmerged Batch 6/7 + vacuity-gate PRs #24/#25/#26 — inventory count line needs a trivial rebase).
 
+## 2026-06-15 — Batch 7 (ai): judge_reliability
+- Shipped 1 deterministic ai harness closing the named retro gap "the 3 ai harnesses are
+  circular / stable-by-construction". It tests the JUDGE itself, not an answer, fusing two
+  pillars no mainstream eval tool ships together (verified novel in the 2026-06-15 prior-art pass):
+  (P1) verdict variance across N identical runs must be ZERO (unanimous), and (P2) the judge must
+  cite a verbatim span that is a normalized substring of the source, ≥12 chars (so a trivial
+  always-present token can't satisfy it) — machine-checkable, NO second LLM.
+- Two planted-bug judges isolate the pillars so neither is vacuous: `unstable_judge` flips its
+  verdict by run index but cites a REAL span (caught only by P1); `blind_judge` is perfectly
+  stable but cites an absent span (caught only by P2). The proof asserts each is caught on its
+  specific pillar (`report.stable is False` xor `report.spans_verbatim is False`), and the oracle
+  clears both.
+- Follows the established ai-lane pattern: deepeval `BaseMetric` + `LLMTestCase` (source carried in
+  `context=[...]`) + telemetry opt-out env. No new dependency (deepeval already in the `ai` extra);
+  deptry clean. Verified: `--self-test` exit 0; 6 new tests pass; ruff/deptry clean; fast lane
+  76 passed / 3 skipped (mutmut on Windows). Inventory 26→27 (6 ai). NOTE: branched off `origin/main`
+  so this is independent of the unmerged Batch 6 (PR #24) — the inventory count line will need a
+  trivial rebase if Batch 6 merges first.
+
+## 2026-06-15 — Batch 6 (lib, auth): jwt_alg_confusion / rbac_authz_differential
+- Shipped 2 in-process lib auth harnesses closing named retro gaps (RBAC scopes + JWT
+  alg-confusion; the `pyjwt>=2.13` floor was unproven by any harness). Both run on the fast
+  lane + self-test glob (no Docker), unlike the integration `keycloak_oidc`.
+- `jwt_alg_confusion`: generates a real RSA keypair (cryptography), mints a valid RS256 token,
+  then forges (1) `alg=none` and (2) HS256 signed with the RSA **public PEM** as the HMAC secret.
+  ORACLE `StrictVerifier` pins `algorithms=["RS256"]` and rejects both; BUGGY `ConfusedVerifier`
+  trusts the token's own `alg` header (HMAC-with-pubkey for HS256, skip for none) and accepts them.
+  - GOTCHA: the HS256-confusion token must be **hand-crafted with `hmac`/`hashlib`**, not
+    `jwt.encode(claims, pub_pem, algorithm="HS256")` — PyJWT's HMAC guard raises on a PEM key. An
+    attacker isn't bound by that guard, so hand-rolling the HMAC is the faithful attack.
+  - Floor pin: `pyjwt_floor_rejects_confusion()` asserts `jwt.decode(forged, pub_pem,
+    algorithms=["RS256","HS256"])` still RAISES on PyJWT >=2.13 (CVE-2026-48526 — asymmetric key
+    refused as HMAC secret), so even a verifier that wrongly allows HS256 is protected.
+  - Added `pyjwt[crypto]>=2.13` to the **lib** extra (was integration-only). Imported directly →
+    no deptry DEP002 ignore needed. `uv lock` was a no-op for resolution (already locked at 2.13.0).
+- `rbac_authz_differential`: Cedar/Lean verification-guided-development pattern, scaled to Python.
+  A ground-truth `reference_allow` model + Hypothesis-generated policies/requests; the impl under
+  test must agree. BUGGY `buggy_allow` checks the resource but **ignores the action** (read→write
+  escalation); the differential oracle shrinks to a minimal divergence. ORACLE agrees everywhere.
+- Verified: both `--self-test` exit 0; 13 new tests pass; ruff/deptry clean; fast lane 83 passed,
+  3 skipped (mutmut on Windows), 40 integration deselected. Inventory 26→28 (12 lib).
+
+## 2026-06-15 — vacuous-green meta-gate (tools/vacuity_gate.py)
+- Shipped the per-harness mutation runner ADR-0006 DEFERRED — but via monkeypatch, NOT mutmut,
+  which sidesteps both mutmut blockers (native-Windows refusal + package-module trampoline). For
+  each lib/ai harness declaring `VACUITY_TARGETS`, the gate spawns a subprocess that replaces the
+  named oracle symbol(s) with an inert stand-in (`_Inert()` returns a unique sentinel), re-runs
+  the harness's `run_self_test()`, and asserts it goes RED. Stays green → `VACUOUS` (blocking);
+  red → `TEETH`; no `VACUITY_TARGETS` → `UNMAPPED` (advisory). Integration excluded (Docker), same
+  as `make selftest`.
+- The gate has its OWN teeth: `tools/_vacuity_fixtures/{real,vacuous}_harness.py` + `--self-test`
+  assert it reads the real fixture as TEETH and DETECTS the vacuous one as VACUOUS — otherwise the
+  gate would itself be vacuous green. Covered in the lib lane by `tests/lib/test_vacuity_gate.py`.
+- A neutered oracle that makes `run_self_test()` either return non-zero OR raise both count as
+  red (rc != 0). The inert returns a sentinel; e.g. `agentic_pbt` raises AttributeError on
+  `sentinel.startswith` — still a clean "not green". Worker uses `sys.executable` so it inherits
+  the uv venv; CWD = repo root so `harnesses.*` imports resolve.
+- Wiring: `make vacuity` + advisory `.github/workflows/vacuity.yml` (modeled on mutation.yml,
+  `continue-on-error`, SHA-pinned actions, `permissions: contents: read`). NOT in `make all` yet.
+  PILOT: 3 mapped harnesses (property_roundtrip→rle_decode, agentic_pbt→ensure_prefix,
+  geval_rubric→output_satisfies_rubric) all read TEETH; 12 lib+ai UNMAPPED — rollout is follow-on.
+  Promote the lane to required once no lib+ai harness is UNMAPPED. No new dependency (stdlib only);
+  not a harness, so no inventory change. Branched off `origin/main` (independent of PRs #24/#25).
+
 ## 2026-06-14 — Phase 4: settings + tech-debt
 - Branch protection on `main`: added **Dependency Review** to the required status checks via
   `gh api PATCH repos/.../branches/main/protection/required_status_checks` (now 5 required:

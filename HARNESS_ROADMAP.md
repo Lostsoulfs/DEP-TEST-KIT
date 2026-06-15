@@ -22,6 +22,11 @@ unused declarations), and ships a planted-bug proof test.
   `elasticsearch_index` (elasticsearch), `rabbitmq_redelivery` (pika), `keycloak_oidc` (pyjwt).
 - Batch 5 (ai) — **complete**: `rag_faithfulness` (deepeval, context precision),
   `geval_rubric` (deepeval, deterministic rubric grader), `metamorphic_stability` (hypothesis).
+- Batch 6 (lib, auth) — **complete**: `jwt_alg_confusion` (pyjwt[crypto], algorithm-confusion
+  rejection / proves the >=2.13 floor), `rbac_authz_differential` (hypothesis, model-based
+  authorization differential).
+- Batch 7 (ai) — **complete**: `judge_reliability` (deepeval, LLM-judge variance gate +
+  verbatim-span citation predicate).
 - Batch 8 (lib) — **complete**: `hallucinated_symbol` (pydantic, live-surface attribute
   resolution vs a naive module-only check).
 
@@ -105,10 +110,38 @@ distinct, useful angle is retrieval precision. `geval_rubric` uses a determinist
 `RubricMetric` rather than live G-Eval (which needs an LLM judge), per the no-live-LLM
 invariant. No new dependency — both deepeval and hypothesis were already in the `ai` extra.
 
+## Batch 6 — lib (auth / authorization) ✅ complete
+Source: the 2026-06-15 idea backlog (`project_dep_test_kit_retro.md` named gaps — RBAC scopes
+and JWT alg-confusion, with the `pyjwt>=2.13` floor unproven by any harness). Both are
+in-process lib harnesses (no Docker), so they run on the fast lane + self-test glob.
+
+| Candidate | Dep | Failure class | Status |
+|-----------|-----|---------------|--------|
+| `jwt_alg_confusion` | pyjwt[crypto] | RS256→HS256 public-key confusion + `alg=none` accepted by a verifier that trusts the token's `alg` (CWE-347 / CVE-2026-48526); proves the `>=2.13` floor | ✅ shipped |
+| `rbac_authz_differential` | hypothesis | authorizer drops the action half of (resource, action) → read→write escalation; caught by a Cedar/Lean-style differential vs a reference model | ✅ shipped |
+
+Note: `jwt_alg_confusion` adds `pyjwt[crypto]>=2.13` to the **`lib`** extra (it was
+integration-only for `keycloak_oidc`); both harnesses import their dep directly, so no deptry
+ignore is needed.
+
 Out of scope for this harness library (platform/agent work, not testing harnesses):
 agent protocols (MCP/A2A/ACP/SDE), orchestration stacks (LangGraph/CrewAI/AutoGen),
 and tracing (Arize Phoenix / OpenTelemetry — the `log.sh` JSONL is the lightweight
 stand-in already in `.claude/hooks/`).
+
+## Batch 7 — ai (judge reliability) ✅ complete
+Source: the 2026-06-15 idea backlog (`project_dep_test_kit_retro.md` flagged the 3 prior ai
+harnesses as circular / stable-by-construction). This one tests the *judge itself*, fusing two
+pillars no mainstream eval tool packages together. Deterministic, no live LLM / no API key.
+
+| Candidate | Dep | Failure class | Status |
+|-----------|-----|---------------|--------|
+| `judge_reliability` | deepeval | an LLM-judge that is non-deterministic across identical runs (variance) OR content-blind (cites no verbatim span) — both invisible to a structural/G-Eval check | ✅ shipped |
+
+Note: no new dependency (deepeval already in the `ai` extra). Both pillars are machine-checkable
+with no second LLM — verdict dispersion across N runs, and a normalized verbatim-substring span
+predicate with a minimum length so a trivial token cannot satisfy it. Complements (does not
+replace) `geval_rubric`; hardening `geval_rubric`/`metamorphic_stability` is a noted follow-on.
 
 ## Batch 8 — lib (dependency surface) ✅ complete
 Source: the 2026-06-15 idea backlog. LLM codegen invents attributes on real packages (the

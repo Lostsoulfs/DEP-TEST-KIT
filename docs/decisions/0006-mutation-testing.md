@@ -38,3 +38,27 @@ gate:
 - The advisory lane never blocks merges; promote to required only once an incremental
   per-harness runner exists.
 - Local mutation runs need Linux/WSL on a Windows box (documented on `make mutation`).
+
+## Update (2026-06-15) — the deferred per-harness runner now ships, without mutmut
+The deferred "mutate each harness' oracle, run its tests" gate is delivered by
+`tools/vacuity_gate.py` using a DIFFERENT mechanism that sidesteps the two mutmut blockers:
+it monkeypatches each harness's declared `VACUITY_TARGETS` oracle symbol to an inert
+stand-in in a subprocess, re-runs the harness's `run_self_test()`, and asserts it goes red
+(`TEETH`); a harness that stays green is `VACUOUS` (blocking). Because it never invokes mutmut,
+it runs on native Windows and on package-prefixed modules — the exact constraints that blocked
+the original plan. The gate proves itself on two fixtures (a real harness that must read TEETH,
+a vacuous one that must be detected) via `--self-test`.
+- Rollout is **advisory** (`.github/workflows/vacuity.yml`, `continue-on-error`) while
+  `VACUITY_TARGETS` is added across all lib+ai harnesses; harnesses without it report `UNMAPPED`.
+  Promote to required once no lib+ai harness is `UNMAPPED`.
+- `mutation_quality` (the mutmut harness) stays as-is — it remains the real-mutmut signal on
+  Linux/WSL; the vacuity gate is the complementary cross-platform per-harness teeth check.
+- **Soundness limitation (known, by design):** the inert stand-in returns a unique sentinel, so
+  for some harnesses the neutered run goes red via a *type-crash* the moment the sentinel is
+  touched (e.g. `sentinel.startswith`), not via the harness's correctness assertion firing. A
+  green control run guarantees the redness is caused by the oracle neuter (the only change), so
+  the gate soundly proves the oracle symbol is **load-bearing/reachable** — but it does NOT prove
+  the self-test would catch every wrong-but-non-crashing oracle, and a self-test that crashed in
+  unrelated setup would also read TEETH. This is weaker than true mutation testing (`mutmut`,
+  which substitutes plausible non-crashing mutants); the two are complementary. Distinguishing
+  "red via assertion" from "red via crash" is possible future work.

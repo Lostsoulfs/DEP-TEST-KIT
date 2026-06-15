@@ -39,6 +39,9 @@ os.environ.setdefault("DEEPEVAL_TELEMETRY_OPT_OUT", "YES")
 os.environ.setdefault("ERROR_REPORTING", "NO")
 os.environ.setdefault("DEEPEVAL_DISABLE_PROGRESS_BAR", "YES")
 
+# Symbol the vacuous-green meta-gate (tools/vacuity_gate.py) neuters to confirm teeth.
+VACUITY_TARGETS = ["output_satisfies_rubric"]
+
 # A "judge agent" must emit JSON: {"verdict": "pass"|"fail", "confidence": <0..1>}.
 ORACLE_OUTPUT = '{"verdict": "pass", "confidence": 0.92}'
 BUGGY_OUTPUT = '{"verdict": "pass", "confidence": 1.7}'   # confidence out of range

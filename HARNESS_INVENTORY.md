@@ -1,6 +1,6 @@
 # Harness Inventory
 
-**Total: 27 harnesses** (11 lib, 11 integration, 5 ai). This repo grows in batches of ≤6;
+**Total: 30 harnesses** (13 lib, 11 integration, 6 ai). This repo grows in batches of ≤6;
 see `HARNESS_ROADMAP.md` for what's next. Every harness ships a paired test and a
 planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstring.
 
@@ -115,6 +115,31 @@ planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstr
   failure that can never succeed (CWE-754).
 - **Proof:** the buggy policy attempts a permanent error `MAX_ATTEMPTS` times; the oracle
   (retry only `TransientError`) attempts it exactly once.
+
+### jwt_alg_confusion — algorithm-confusion rejection (PyJWT + cryptography)
+- **File:** `harnesses/lib/jwt_alg_confusion_test_harness.py`
+- **Tests:** `tests/lib/test_jwt_alg_confusion_test_harness.py` (+ `_proof.py`)
+- **Dep:** `pyjwt[crypto]` (in-process; the in-process sibling of `keycloak_oidc`, no Docker)
+- **Why:** `keycloak_oidc` proves a verifier must check the signature *at all*; it does not
+  prove the subtler attack — algorithm confusion. An attacker signs HS256 with the RSA
+  **public** key (which is public by design), or sends `alg=none`, and a verifier that trusts
+  the token's own `alg` accepts the forgery (CWE-347 / CVE-2026-48526). This is the harness the
+  `pyjwt[crypto]>=2.13` floor exists for.
+- **Proof:** the strict verifier (`algorithms=["RS256"]`) rejects both an `alg=none` token and an
+  HS256-with-public-key forgery; the confused-deputy verifier accepts both. A floor check pins
+  that PyJWT >=2.13 refuses an RSA PEM as an HMAC secret even when HS256 is allowed.
+
+### rbac_authz_differential — model-based authorization differential (Hypothesis)
+- **File:** `harnesses/lib/rbac_authz_differential_test_harness.py`
+- **Tests:** `tests/lib/test_rbac_authz_differential_test_harness.py` (+ `_proof.py`)
+- **Dep:** `hypothesis`
+- **Why:** example-based authz tests miss the (resource, action) cases nobody wrote — a check
+  that grants on the resource but drops the action lets a viewer's *read* become *write*. The
+  Cedar/Lean verification-guided-development pattern keeps a tiny ground-truth REFERENCE
+  authorizer and asserts the implementation agrees across randomly generated policies/requests.
+- **Proof:** the differential oracle finds a request where the action-ignoring authorizer grants
+  what the reference denies (read→write escalation), shrunk to a minimal case; the correct
+  implementation agrees with the reference on every generated input.
 
 ### hallucinated_symbol — live-surface attribute resolution vs naive module check (pydantic)
 - **File:** `harnesses/lib/hallucinated_symbol_test_harness.py`
@@ -273,6 +298,19 @@ planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstr
   punctuation). The MetaQA-style metamorphic relation `f(perturb(q)) == f(q)`, no model.
 - **Proof:** Hypothesis composes neutral perturbations; the buggy (length-parity) responder
   flips its answer (caught on a trailing space); the normalized oracle is invariant.
+
+### judge_reliability — LLM-judge variance gate + verbatim-span citation (deepeval)
+- **File:** `harnesses/ai/judge_reliability_test_harness.py`
+- **Tests:** `tests/ai/test_judge_reliability_test_harness.py` (+ `_proof.py`)
+- **Dep:** `deepeval`
+- **Why:** an "LLM-as-judge" gate (G-Eval and friends) fails two ways a structural check can't
+  see: it is **non-deterministic** (flips its verdict across identical runs, so green is luck)
+  or **content-blind** (cites nothing real, the circular/stable-by-construction trap). A
+  shape-valid judge can still be unreliable on both axes — the gap `geval_rubric` doesn't cover.
+- **Proof:** a deterministic `JudgeReliabilityMetric` (BaseMetric) polls a judge N times and
+  scores 1.0 only if the verdict is unanimous AND every cited span is a verbatim substring of
+  the source. `unstable_judge` (flips by run index) is caught by the variance pillar; `blind_judge`
+  (stable but cites an absent span) by the span pillar; the `oracle_judge` clears both.
 
 ## Convention
 See `template/harness_template.py` for the shape and `docs/decisions/0001-stack-decisions.md`
