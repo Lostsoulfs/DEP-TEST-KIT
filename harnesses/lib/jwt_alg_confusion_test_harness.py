@@ -41,7 +41,7 @@ import sys
 import jwt  # PyJWT — the harness's declared dependency
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from jwt.exceptions import InvalidSignatureError
+from jwt.exceptions import InvalidAlgorithmError, InvalidKeyError, InvalidSignatureError
 
 ISSUER = "https://issuer.example"
 AUDIENCE = "dep-test-kit"
@@ -79,15 +79,17 @@ def mint_rs256(private_key: rsa.RSAPrivateKey) -> str:
     return jwt.encode(CLAIMS, private_key, algorithm="RS256")
 
 
-def forge_alg_none(claims: dict = CLAIMS) -> str:
+def forge_alg_none(claims: dict | None = None) -> str:
     """Attack token: ``alg=none`` with an empty signature (no key needed)."""
+    claims = CLAIMS if claims is None else claims
     header = {"alg": "none", "typ": "JWT"}
     return f"{_b64u_json(header)}.{_b64u_json(claims)}."
 
 
-def forge_hs256_with_public_key(public_pem: bytes, claims: dict = CLAIMS) -> str:
+def forge_hs256_with_public_key(public_pem: bytes, claims: dict | None = None) -> str:
     """Attack token: HS256 signed with the RSA *public* PEM as the HMAC secret. Built by
     hand (an attacker is not bound by PyJWT's asymmetric-key-as-HMAC guard)."""
+    claims = CLAIMS if claims is None else claims
     header = {"alg": "HS256", "typ": "JWT"}
     signing_input = f"{_b64u_json(header)}.{_b64u_json(claims)}"
     sig = hmac.new(public_pem, signing_input.encode(), hashlib.sha256).digest()
@@ -157,7 +159,10 @@ def pyjwt_floor_rejects_confusion(forged_hs256: str, public_pem: bytes) -> bool:
             issuer=ISSUER,
         )
         return False  # PyJWT accepted the confusion — the floor is not protecting us
-    except Exception:
+    except (InvalidKeyError, InvalidAlgorithmError, InvalidSignatureError):
+        # Assert the INTENDED rejection cause (asymmetric PEM refused as an HMAC secret),
+        # not just any error — an unexpected exception propagates and fails loud instead of
+        # masking a regression of the confusion protection.
         return True
 
 
