@@ -1,6 +1,6 @@
 # Harness Inventory
 
-**Total: 28 harnesses** (12 lib, 11 integration, 5 ai). This repo grows in batches of ≤6;
+**Total: 29 harnesses** (12 lib, 11 integration, 6 ai). This repo grows in batches of ≤6;
 see `HARNESS_ROADMAP.md` for what's next. Every harness ships a paired test and a
 planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstring.
 
@@ -285,6 +285,19 @@ planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstr
   punctuation). The MetaQA-style metamorphic relation `f(perturb(q)) == f(q)`, no model.
 - **Proof:** Hypothesis composes neutral perturbations; the buggy (length-parity) responder
   flips its answer (caught on a trailing space); the normalized oracle is invariant.
+
+### judge_reliability — LLM-judge variance gate + verbatim-span citation (deepeval)
+- **File:** `harnesses/ai/judge_reliability_test_harness.py`
+- **Tests:** `tests/ai/test_judge_reliability_test_harness.py` (+ `_proof.py`)
+- **Dep:** `deepeval`
+- **Why:** an "LLM-as-judge" gate (G-Eval and friends) fails two ways a structural check can't
+  see: it is **non-deterministic** (flips its verdict across identical runs, so green is luck)
+  or **content-blind** (cites nothing real, the circular/stable-by-construction trap). A
+  shape-valid judge can still be unreliable on both axes — the gap `geval_rubric` doesn't cover.
+- **Proof:** a deterministic `JudgeReliabilityMetric` (BaseMetric) polls a judge N times and
+  scores 1.0 only if the verdict is unanimous AND every cited span is a verbatim substring of
+  the source. `unstable_judge` (flips by run index) is caught by the variance pillar; `blind_judge`
+  (stable but cites an absent span) by the span pillar; the `oracle_judge` clears both.
 
 ## Convention
 See `template/harness_template.py` for the shape and `docs/decisions/0001-stack-decisions.md`
