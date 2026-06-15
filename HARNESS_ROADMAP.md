@@ -22,6 +22,9 @@ unused declarations), and ships a planted-bug proof test.
   `elasticsearch_index` (elasticsearch), `rabbitmq_redelivery` (pika), `keycloak_oidc` (pyjwt).
 - Batch 5 (ai) — **complete**: `rag_faithfulness` (deepeval, context precision),
   `geval_rubric` (deepeval, deterministic rubric grader), `metamorphic_stability` (hypothesis).
+- Batch 6 (lib, auth) — **complete**: `jwt_alg_confusion` (pyjwt[crypto], algorithm-confusion
+  rejection / proves the >=2.13 floor), `rbac_authz_differential` (hypothesis, model-based
+  authorization differential).
 
 ## Batch 1 — lib (library-backed, in-process) ✅ complete
 Source: research T1 (testing-library ecosystem survey).
@@ -102,6 +105,20 @@ stale (0.4.3, Jan 2026) and `llm_eval` already covers generation faithfulness, s
 distinct, useful angle is retrieval precision. `geval_rubric` uses a deterministic
 `RubricMetric` rather than live G-Eval (which needs an LLM judge), per the no-live-LLM
 invariant. No new dependency — both deepeval and hypothesis were already in the `ai` extra.
+
+## Batch 6 — lib (auth / authorization) ✅ complete
+Source: the 2026-06-15 idea backlog (`project_dep_test_kit_retro.md` named gaps — RBAC scopes
+and JWT alg-confusion, with the `pyjwt>=2.13` floor unproven by any harness). Both are
+in-process lib harnesses (no Docker), so they run on the fast lane + self-test glob.
+
+| Candidate | Dep | Failure class | Status |
+|-----------|-----|---------------|--------|
+| `jwt_alg_confusion` | pyjwt[crypto] | RS256→HS256 public-key confusion + `alg=none` accepted by a verifier that trusts the token's `alg` (CWE-347 / CVE-2026-48526); proves the `>=2.13` floor | ✅ shipped |
+| `rbac_authz_differential` | hypothesis | authorizer drops the action half of (resource, action) → read→write escalation; caught by a Cedar/Lean-style differential vs a reference model | ✅ shipped |
+
+Note: `jwt_alg_confusion` adds `pyjwt[crypto]>=2.13` to the **`lib`** extra (it was
+integration-only for `keycloak_oidc`); both harnesses import their dep directly, so no deptry
+ignore is needed.
 
 Out of scope for this harness library (platform/agent work, not testing harnesses):
 agent protocols (MCP/A2A/ACP/SDE), orchestration stacks (LangGraph/CrewAI/AutoGen),

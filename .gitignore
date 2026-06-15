@@ -19,6 +19,10 @@ sbom.cdx.json
 audit-report.md
 dist/
 build/
+# coverage data (the lib lane runs pytest --cov; report-only, never committed)
+.coverage
+.coverage.*
+htmlcov/
 
 # Agent runtime logs (PostToolUse log.sh)
 .claude/logs/
