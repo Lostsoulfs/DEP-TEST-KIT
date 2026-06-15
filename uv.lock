@@ -988,7 +988,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -2658,11 +2658,11 @@ wheels = [
 
 [[package]]
 name = "pyrate-limiter"
-version = "4.3.1"
+version = "4.4.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/38/f3/29d1f5c0478100a7847f0a58b918125fc8798d7a24bd658f8925d9f119b4/pyrate_limiter-4.3.1.tar.gz", hash = "sha256:0575f6b595c2351e3b5778ae1d8d4c523e38446532de66df7a0795bb315bd702", size = 82959, upload-time = "2026-06-13T17:45:21.799Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/27/e564f33ea085c63d5540f707b31aeb50a4992eac2da655dc02435a760a07/pyrate_limiter-4.4.0.tar.gz", hash = "sha256:2c0c720c4fa16c5d8199e4821bf34507fb49c007a25b786cec6fb94ffd0844aa", size = 90955, upload-time = "2026-06-14T10:52:03.021Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/33/d2/d852ab9e10ed4b9a8c36c03d7e3149c0caaf9c0ae1f608cd19de9d026754/pyrate_limiter-4.3.1-py3-none-any.whl", hash = "sha256:75b9d5974ccec835d2c86faefc44b871eb5b42036614179d959bd895e81cf1f3", size = 37684, upload-time = "2026-06-13T17:45:20.148Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/77/2b5ea2e5e343fd7f74ba9c50a282d7cb66d1be3d12bd647510338d78fcf1/pyrate_limiter-4.4.0-py3-none-any.whl", hash = "sha256:f738dfa3c7ac1222a5ea3d31e00cfd31b5592b13ade4077afe9e8ac6293381f5", size = 43102, upload-time = "2026-06-14T10:52:01.334Z" },
 ]
 
 [[package]]
@@ -3268,7 +3268,7 @@ wheels = [
 
 [[package]]
 name = "schemathesis"
-version = "4.21.5"
+version = "4.21.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -3290,9 +3290,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4b/a3/f206a0907d66245dcd63ce9bc6da5f09b894cb479d45842dad4b3ab72954/schemathesis-4.21.5.tar.gz", hash = "sha256:ca5e410107df0b42847ad0861bcc5bed13c4583c091b9f1af6cd2370206cb1c0", size = 2278623, upload-time = "2026-06-11T15:57:09.44Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3c/54/7c75d585460ba536953d2a78c56710df01038510b4548acb4c83a911b191/schemathesis-4.21.6.tar.gz", hash = "sha256:0c21142c91e7b189a0b89ad8a5152b4b3071b707463d4f454f2a1ad1c0505bae", size = 2279531, upload-time = "2026-06-14T09:53:01.837Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8d/32/1a6ca3c209035f7843d7cf3966c46823b188ef3dd0be79248ead3f44e2fe/schemathesis-4.21.5-py3-none-any.whl", hash = "sha256:b4f342afdf844807a21f5a84334d3ef038c9f2a73951f191220f1443cafc0fc1", size = 753371, upload-time = "2026-06-11T15:57:07.291Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/0e/0d9a5b28f2cfc3d59eff3ac9ffe9168ee71e82bc178de20306b5c1ef5a23/schemathesis-4.21.6-py3-none-any.whl", hash = "sha256:82c1716048b510e4064d6308fa341c8e5165a5f90390c5729f99cc923283ab0e", size = 753995, upload-time = "2026-06-14T09:52:59.817Z" },
 ]
 
 [[package]]
