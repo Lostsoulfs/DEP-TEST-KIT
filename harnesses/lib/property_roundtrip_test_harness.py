@@ -30,6 +30,9 @@ from typing import Callable
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+# Symbol the vacuous-green meta-gate (tools/vacuity_gate.py) neuters to confirm teeth.
+VACUITY_TARGETS = ["rle_decode"]
+
 
 # --- ORACLE ---------------------------------------------------------------------
 def rle_encode(text: str) -> list[tuple[str, int]]:
