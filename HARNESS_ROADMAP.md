@@ -22,6 +22,8 @@ unused declarations), and ships a planted-bug proof test.
   `elasticsearch_index` (elasticsearch), `rabbitmq_redelivery` (pika), `keycloak_oidc` (pyjwt).
 - Batch 5 (ai) — **complete**: `rag_faithfulness` (deepeval, context precision),
   `geval_rubric` (deepeval, deterministic rubric grader), `metamorphic_stability` (hypothesis).
+- Batch 8 (lib) — **complete**: `hallucinated_symbol` (pydantic, live-surface attribute
+  resolution vs a naive module-only check).
 
 ## Batch 1 — lib (library-backed, in-process) ✅ complete
 Source: research T1 (testing-library ecosystem survey).
@@ -107,6 +109,20 @@ Out of scope for this harness library (platform/agent work, not testing harnesse
 agent protocols (MCP/A2A/ACP/SDE), orchestration stacks (LangGraph/CrewAI/AutoGen),
 and tracing (Arize Phoenix / OpenTelemetry — the `log.sh` JSONL is the lightweight
 stand-in already in `.claude/hooks/`).
+
+## Batch 8 — lib (dependency surface) ✅ complete
+Source: the 2026-06-15 idea backlog. LLM codegen invents attributes on real packages (the
+Llama `AttributeError` pattern); static type-checkers go blind on untyped/C-extension/dynamic
+surfaces. Anchored on a real dependency (NOT pure stdlib — that would belong in `testing-kits`).
+
+| Candidate | Dep | Failure class | Status |
+|-----------|-----|---------------|--------|
+| `hallucinated_symbol` | pydantic | a hallucinated `pkg.<attr>` that does not exist on the live, version-pinned package surface, missed by a naive "does the module import?" check | ✅ shipped |
+
+Note: introspects the live installed pydantic surface (`hasattr` honors PEP 562 `__getattr__` +
+C-extension members; `__all__` for re-exports), pinned to `importlib.metadata.version`. No new
+dependency (pydantic already in the `lib` extra). Scope is single-level `pydantic.<attr>`;
+multi-level chains and a general any-package resolver are a noted follow-on.
 
 ## Notes
 - **Batch naming:** a batch number is assigned when its harnesses ship and is never reused or

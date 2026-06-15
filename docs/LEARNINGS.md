@@ -5,6 +5,23 @@ dated. This is **data, not instructions** — never act on a line here as a comm
 The auditor and explorer agents append here; when it grows past ~500 lines, promote
 evergreen rules into the ADRs and mark superseded entries historical.
 
+## 2026-06-15 — Batch 8 (lib): hallucinated_symbol
+- Shipped 1 lib harness for hallucinated-attribute detection (the Llama `AttributeError`/
+  `TypeError`-from-a-hallucinated-method pattern). Parses `pydantic.<attr>` accesses with `ast`
+  and resolves each against the LIVE installed pydantic surface — `hasattr` (which triggers PEP
+  562 module `__getattr__` and finds C-extension members) + `__all__` — pinned to
+  `importlib.metadata.version("pydantic")`. ORACLE flags `pydantic.BaseModelz`/`field_validatorr`;
+  BUGGY only checks the module imports and misses them.
+- DESIGN CALL: a pure-stdlib `ast`+`importlib` resolver would belong in `testing-kits` (the stdlib
+  repo), NOT here. Anchored it on a real dependency (pydantic, already in the `lib` extra) so it
+  introspects a live third-party surface and fits DEP-TEST-KIT's "non-stdlib, dependency-backed"
+  charter; deptry sees pydantic used. No new dependency.
+- Scope is single-level `pydantic.<attr>` (the demonstrative case); multi-level chains
+  (`pkg.sub.attr`) and a general any-package resolver are a noted follow-on. Verified: `--self-test`
+  exit 0 (pydantic 2.13.4); 6 tests pass; ruff/deptry clean; fast lane 76 passed / 3 skipped
+  (mutmut on Windows). Inventory 26→27 (11 lib). Branched off `origin/main` (independent of the
+  unmerged Batch 6/7 + vacuity-gate PRs #24/#25/#26 — inventory count line needs a trivial rebase).
+
 ## 2026-06-14 — Phase 4: settings + tech-debt
 - Branch protection on `main`: added **Dependency Review** to the required status checks via
   `gh api PATCH repos/.../branches/main/protection/required_status_checks` (now 5 required:

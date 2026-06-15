@@ -1,6 +1,6 @@
 # Harness Inventory
 
-**Total: 26 harnesses** (10 lib, 11 integration, 5 ai). This repo grows in batches of ≤6;
+**Total: 27 harnesses** (11 lib, 11 integration, 5 ai). This repo grows in batches of ≤6;
 see `HARNESS_ROADMAP.md` for what's next. Every harness ships a paired test and a
 planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstring.
 
@@ -115,6 +115,19 @@ planted-bug **proof** test, and documents WHY / HOW / WHERE in its module docstr
   failure that can never succeed (CWE-754).
 - **Proof:** the buggy policy attempts a permanent error `MAX_ATTEMPTS` times; the oracle
   (retry only `TransientError`) attempts it exactly once.
+
+### hallucinated_symbol — live-surface attribute resolution vs naive module check (pydantic)
+- **File:** `harnesses/lib/hallucinated_symbol_test_harness.py`
+- **Tests:** `tests/lib/test_hallucinated_symbol_test_harness.py` (+ `_proof.py`)
+- **Dep:** `pydantic` (introspects the real installed surface; version-pinned)
+- **Why:** LLM-generated code invents methods/attributes on REAL packages (the Llama
+  `AttributeError`/`TypeError`-from-a-hallucinated-method pattern). A "does the package import?"
+  check passes, and static type-checkers go blind on untyped/C-extension/dynamic surfaces — the
+  only ground truth is the live, version-pinned surface of the installed dependency.
+- **Proof:** the oracle resolves each `pydantic.<attr>` against the live surface (`hasattr` +
+  `__all__`, pinned to `importlib.metadata.version`) and flags `pydantic.BaseModelz` /
+  `field_validatorr`; the naive checker only verifies the module imports and misses them; the
+  oracle stays clean on real code (`pydantic.BaseModel`, `field_validator`).
 
 ## integration (real ephemeral service, needs Docker)
 
