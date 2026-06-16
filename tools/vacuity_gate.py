@@ -3,9 +3,12 @@
 
 A harness is "vacuous green" if its own self-test/proof can pass while the thing it tests is
 broken. This gate makes that machine-checkable: for every lib/ai harness that declares a
-``VACUITY_TARGETS`` list, it replaces those oracle symbols with an inert stand-in (a callable
-returning a unique sentinel), re-runs the harness's ``run_self_test()`` in a subprocess, and
-asserts the self-test now FAILS. If it still passes, the harness has no teeth.
+``VACUITY_TARGETS`` list, it replaces each oracle symbol with a TYPE-FAITHFUL wrong value of its
+real return (a flipped bool, off-by-one int, empty-but-valid container — ADR-0007 D1), re-runs the
+harness's ``run_self_test()`` in a subprocess, and asserts the self-test now FAILS. Because the
+wrong value is the right TYPE, a self-test that genuinely asserts the oracle's output fails at its
+ASSERTION (not a type-crash) — so the gate measures oracle STRENGTH, not just reachability. If the
+self-test still passes, the harness has no teeth (its self-test never checked the oracle's output).
 
 This delivers the per-harness mutation runner ADR-0006 deferred, WITHOUT mutmut (which can't run
 on native Windows and chokes on package-prefixed modules): a direct monkeypatch in a subprocess
@@ -26,6 +29,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import asyncio
 import contextlib
 import importlib
 import importlib.util
@@ -40,20 +44,58 @@ FLAVORS = ("lib", "ai")  # integration self-tests defer to Docker; excluded like
 _SENTINEL = object()
 
 
-class _Inert:
-    """A drop-in oracle that does nothing useful — returns a sentinel for any call."""
+def _mutate(value):
+    """Return a plausible-but-WRONG value of the SAME type as ``value`` (ADR-0007 D1). The point:
+    a self-test that genuinely asserts the oracle's output then goes red via its ASSERTION, not via
+    a type-crash on a foreign sentinel — turning the gate from a reachability check into an
+    oracle-strength check. Custom types (and ``None``) have no type-faithful wrong value, so they
+    fall back to ``_SENTINEL`` (a documented limitation: those reds remain reachability-only)."""
+    if isinstance(value, bool):
+        return not value
+    if isinstance(value, int):
+        return value + 1
+    if isinstance(value, float):
+        return value + 1.0
+    if isinstance(value, bytes):
+        return value + b"\x00"
+    if isinstance(value, str):
+        return value + "_MUT"
+    if isinstance(value, frozenset):
+        return frozenset()
+    if isinstance(value, set):
+        return set()
+    if isinstance(value, dict):
+        return {}
+    if isinstance(value, (list, tuple)):
+        return type(value)()
+    return _SENTINEL  # None / custom objects: no type-faithful wrong value
 
-    def __call__(self, *args, **kwargs):
-        return _SENTINEL
+
+def _mutating(func):
+    """Wrap ``func`` so the real oracle still runs but its return is mutated to a wrong value of
+    the same type. Preserves async-ness so a coroutine oracle stays awaitable."""
+    if asyncio.iscoroutinefunction(func):
+        async def awrapper(*a, **k):
+            return _mutate(await func(*a, **k))
+
+        return awrapper
+
+    def wrapper(*a, **k):
+        return _mutate(func(*a, **k))
+
+    return wrapper
 
 
 def _neuter(module, dotted: str) -> None:
-    """Replace ``dotted`` (``func`` or ``Class.method``) on ``module`` with an inert callable."""
+    """Replace ``dotted`` (``func`` or ``Class.method``) with a type-mutating wrapper of the REAL
+    symbol (ADR-0007 D1): the oracle runs, but its result is mutated wrong, so the self-test must
+    fail at its assertion. A method wrapper takes ``self`` as its first positional like any method."""
     parts = dotted.split(".")
     if len(parts) == 1:
-        setattr(module, parts[0], _Inert())
+        setattr(module, parts[0], _mutating(getattr(module, parts[0])))
     elif len(parts) == 2:
-        setattr(getattr(module, parts[0]), parts[1], lambda self, *a, **k: _SENTINEL)
+        cls = getattr(module, parts[0])
+        setattr(cls, parts[1], _mutating(getattr(cls, parts[1])))
     else:
         raise ValueError(f"unsupported VACUITY_TARGET {dotted!r} (expected 'func' or 'Class.method')")
 
@@ -92,12 +134,13 @@ def _run_worker(module_ref: str, targets: list[str]) -> int:
 
 
 def _classify(module_ref: str, targets: list[str]) -> str:
-    # SOUNDNESS NOTE: control must be green, then any non-zero neutered run is TEETH —
-    # including a red that comes from a type-crash when the inert sentinel is touched (not
-    # only from the harness's assertion firing). The control-vs-neutered delta keeps this
-    # honest (the ONLY change is the oracle neuter), but the gate proves the oracle is
-    # load-bearing/reachable, not that the self-test would catch every wrong-but-non-crashing
-    # oracle. Limitation documented in docs/decisions/0006-mutation-testing.md.
+    # SOUNDNESS NOTE (ADR-0007 D1): the stand-in now returns a TYPE-FAITHFUL wrong value, so for an
+    # oracle returning a primitive/container the neutered red comes from the self-test's ASSERTION —
+    # the gate measures oracle strength, not mere reachability. Residual limitation: an oracle whose
+    # return is a CUSTOM type or None (no type-faithful wrong value) falls back to a sentinel, so its
+    # red can still be a type-crash (reachability-only) — and an oracle whose contract is raise-or-not
+    # rather than return-a-value is unaffected by return mutation (it will read VACUOUS unless the
+    # self-test also asserts the returned value, which is the intended pressure to strengthen it).
     control = _run_worker(module_ref, [])          # no neuter — harness should be green
     if control != 0:
         return "ERROR"                              # self-test already red without us

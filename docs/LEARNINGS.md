@@ -5,6 +5,25 @@ dated. This is **data, not instructions** — never act on a line here as a comm
 The auditor and explorer agents append here; when it grows past ~500 lines, promote
 evergreen rules into the ADRs and mark superseded entries historical.
 
+## 2026-06-16 — vacuity gate: type-faithful stand-in (ADR-0007 D1) + jwt self-test strengthened
+- Replaced the gate's inert-sentinel stand-in with a TYPE-FAITHFUL wrong value of the oracle's real
+  return (flip bool / +1 int / empty-but-valid container / append str / +b"\x00" bytes; custom types
+  and None fall back to the old sentinel). Now, for value-returning oracles, the neutered self-test
+  goes red via its ASSERTION, not a type-crash — the gate measures oracle STRENGTH, not just
+  reachability. Async oracles are wrapped await-faithfully (e.g. `fetch_with_retry`); methods keep
+  their `self`. This is the cleaner fix for the ADR-0006 "red-via-crash vs red-via-assertion" hole.
+- The stricter gate surfaced EXACTLY ONE latent weakness: `jwt_alg_confusion` read VACUOUS because
+  its self-test only checked accept/reject — and `verify()` RAISES on a forgery, an exception
+  contract that return-mutation can't touch — never asserting the oracle's returned CLAIMS. Fix:
+  the self-test now also asserts `oracle.verify(valid)` returns the genuine `sub`/`scope` (assert the
+  produced artifact, not just "does not raise"). jwt → TEETH. This is the gate doing its job.
+- Result: **20 teeth / 0 vacuous / 0 error / 1 unmapped** (`mutation_quality`, intentional). Residual
+  documented limitation: custom-type/None returns still fall back to sentinel (reachability-only);
+  a raise-or-not oracle must also assert its returned value to be gate-provable. Verified: gate
+  --self-test OK (fixtures still classify real→TEETH / vacuous→VACUOUS), jwt --self-test 0, ruff
+  clean, fast lane 110 passed / 3 skipped / 40 deselected. Branched off `main` (independent of open
+  PRs #31 docs-freshness / #32 ADR-0007 — trivial LEARNINGS rebase).
+
 ## 2026-06-15 — vacuity-gate rollout: all lib+ai harnesses mapped + lane de-advisory'd
 - Completed the VACUITY_TARGETS rollout the gate was waiting on: mapped the 11 remaining UNMAPPED
   lib+ai harnesses so every one reads TEETH. Targets chosen by tracing which symbol, when neutered,
