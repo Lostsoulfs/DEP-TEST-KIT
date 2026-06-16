@@ -180,6 +180,16 @@ def run_self_test() -> int:
     if not accepts_token(oracle, valid):
         failures += 1
         print("FAIL: strict verifier rejected a genuine RS256 token", file=sys.stderr)
+    # ...and returns the GENUINE claims, not merely "does not raise" — asserting the produced
+    # artifact (not just accept/reject) is what gives the oracle real teeth, so the vacuity gate's
+    # type-faithful mutation of verify()'s return is caught by an assertion (ADR-0007 D1).
+    try:
+        claims = oracle.verify(valid)
+    except Exception:
+        claims = {}
+    if claims.get("sub") != CLAIMS["sub"] or claims.get("scope") != CLAIMS["scope"]:
+        failures += 1
+        print("FAIL: strict verifier did not return the genuine claims", file=sys.stderr)
     if accepts_token(oracle, none_token):
         failures += 1
         print("FAIL: strict verifier accepted an alg=none token", file=sys.stderr)
