@@ -197,7 +197,25 @@ belongs in `testing-kits`, not here (no dependency anchor), unless built on a re
   `access_token=` shapes and has no entropy detector. Wire in `detect-secrets` (already a dep) so the
   repo's own secret gate has the coverage the `secret_scanning` harness proves a naive grep lacks.
 - A real incremental per-harness **mutation** runner (the ADR-0006 deferred item the vacuity gate
-  only partially covers), and distinguishing vacuity-gate "red via assertion" from "red via crash".
+  only partially covers). NOTE: the "red via assertion vs red via crash" concern is now addressed by
+  the type-compatible stand-in decision in **ADR-0007 D1** (in flight), which is the cleaner fix.
+
+## 2026 practice-review backlog (ADR-0007)
+From the 2026-06-16 cited best-practice review. Tier-1 items are being implemented now; Tier-2/3
+are accepted-direction. Full rationale + sources in `docs/decisions/0007-2026-practice-review.md`.
+- **Tier-1 (in flight):** type-compatible vacuity-gate stand-in (D1); supply-chain layers `uv audit`
+  can't cover — install-time malware screening + lockfile-layer cooldown + audit-exit-code check +
+  vendor-independent OSV fallback (D3). (Mutation lane verified real — D2, no change.)
+- **AI lane honesty + teeth:** rename deterministic scorers as narrower proxies (not "Faithfulness"/
+  "G-Eval"); make every metamorphic relation able to fail (stability ≠ correctness); add a judge
+  bias-probe + justify the 12-char span threshold; add positive/negative fixtures proving the scorers
+  separate faithful from unfaithful.
+- **Property-based:** Hypothesis `RuleBasedStateMachine` for the stateful RBAC domain (op-sequences vs
+  the reference model); `hypothesis.target()` for rare states; exception/precondition-violation
+  properties (OOPSLA 2025: far higher bug yield); property-mutants to gate agent-inferred properties.
+- **Integration:** migrate `wait_for_logs` decorator → `WaitStrategy`/`ExecWaitStrategy`; HEALTHCHECK
+  over log-string waits; verify started-vs-ready (Kafka/ES/Vault/Keycloak); a flaky-test
+  detection/quarantine lifecycle. **SBOM:** sign/attest + attach (not just generate).
 
 ## Notes
 - **Batch naming:** a batch number is assigned when its harnesses ship and is never reused or
