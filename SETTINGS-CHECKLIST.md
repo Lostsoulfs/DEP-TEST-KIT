@@ -1,31 +1,36 @@
 # Repo Settings Checklist
 
-One-time GitHub settings that the code in this repo cannot enforce on its own. Tick
-these in the repository UI; CI enforces the rest.
+One-time GitHub settings that the code in this repo cannot enforce on its own. **All items are
+applied** — branch protection and the Actions allow-list were re-verified via `gh api` on
+2026-06-16; the rest were applied during earlier provisioning (see `docs/LEARNINGS.md`). Kept
+here as the record and for re-provisioning. CI enforces the rest.
 
 ## Branch protection (`main`)
-- [ ] Require a pull request before merging (no direct pushes).
-- [ ] Require status checks to pass: `lib`, `supply-chain`, `integration`, `security-scan`.
-- [ ] Also require `Dependency Review` once its first run lands (new this batch). CodeQL
-      already runs via default setup.
-- [ ] Require branches to be up to date before merging.
-- [ ] Require linear history (optional but recommended).
-- [ ] Restrict who can push / dismiss reviews to the owner.
+- [x] Require a pull request before merging (no direct pushes; force-pushes off).
+- [x] Require status checks to pass — **6 required contexts**, `strict` (up-to-date) on:
+      `Lib lane + lint + dep-prune`, `Audit + SBOM`, `Integration lane (Docker)`,
+      `Secret + workflow scan`, `review` (Dependency Review), `Vacuous-green meta-gate`.
+- [x] Require branches to be up to date before merging (`strict`).
+- [x] Require linear history (squash-only merges).
+- [x] Enforce for administrators; 0 approvals required (solo owner).
 
 ## Security
-- [ ] Secret scanning + push protection: **on**.
-- [ ] Dependency graph: **on** (needed for Renovate + advisories).
-- [ ] Private vulnerability reporting: **on** (per `SECURITY.md`).
-- [ ] Actions → "Allow <owner>, and select non-<owner>, actions" set to pinned SHAs only.
-- [ ] Code scanning: keep CodeQL **default setup ON** — it already provides CodeQL. Do NOT
-      add an advanced `codeql.yml` (it conflicts: "advanced configurations cannot be
-      processed when the default setup is enabled").
+- [x] Secret scanning + push protection: **on**.
+- [x] Dependency graph: **on** (public repo default; Renovate is active against it).
+- [x] Private vulnerability reporting: **on** (per `SECURITY.md`).
+- [x] Actions → allowed actions set to **selected** (owner actions + pinned-SHA third-party only).
+- [x] Code scanning: CodeQL **default setup ON** (the `Analyze (python)/(actions)` checks). Do NOT
+      add an advanced `codeql.yml` — it conflicts ("advanced configurations cannot be processed when
+      the default setup is enabled").
+- Note: **Dependabot vulnerability alerts are intentionally OFF.** The repo's vuln mechanism is
+  `uv audit` (OSV-based, **blocking** in the `Audit + SBOM` CI lane) plus Renovate updates — see
+  `SECURITY.md`. Enable Dependabot alerts only if a redundant passive-alert layer is wanted.
 
 ## Automation
-- [ ] Install/enable **Renovate** (config at `.github/renovate.json`).
-- [ ] Workflow permissions default: **read-only**; "Allow GitHub Actions to create and
-      approve pull requests": **off**.
+- [x] **Renovate** enabled (config at `.github/renovate.json`; merged Renovate PRs confirm it runs).
+- [x] Workflow permissions default: **read-only**; "Allow GitHub Actions to create and approve
+      pull requests": **off**.
 
-## Local dev
+## Local dev (per-clone / per-machine, not a repo setting)
 - [ ] `uv sync --all-extras` then `uvx pre-commit install`.
 - [ ] Docker available if running the integration lane locally.

@@ -62,3 +62,15 @@ a vacuous one that must be detected) via `--self-test`.
   unrelated setup would also read TEETH. This is weaker than true mutation testing (`mutmut`,
   which substitutes plausible non-crashing mutants); the two are complementary. Distinguishing
   "red via assertion" from "red via crash" is possible future work.
+
+## Update (2026-06-16) — rollout complete; lane promoted to required
+All lib+ai harnesses now declare `VACUITY_TARGETS` and read TEETH (gate: 20 teeth / 0 vacuous /
+0 error / 1 unmapped). The one exception, `mutation_quality`, stays intentionally UNMAPPED — it
+env-skips on native Windows, so a mapped target would read VACUOUS locally; its teeth come from the
+dedicated `mutation` lane. With no lib+ai harness UNMAPPED (the documented promotion trigger), the
+lane was de-advisory'd: `continue-on-error` removed from `vacuity.yml` (job renamed
+"Vacuous-green meta-gate", workflow "Vacuity"), `make vacuity` added to `make all`, and the check
+added to `main`'s required status checks — so it is now **merge-blocking**. Target-selection note:
+the chosen symbol is the one whose neuter makes the self-test go red, which for several harnesses is
+the discriminating PREDICATE, not the oracle (the oracle is not always load-bearing in the
+self-test) — full rationale in `docs/LEARNINGS.md` (2026-06-15 rollout entry).

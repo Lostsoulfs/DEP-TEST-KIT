@@ -7,7 +7,7 @@ lens fails.
 
 ## 0. Mechanical gate (must be green first)
 ```
-make all      # sync(--locked) + ruff + deptry + lib tests + self-tests + uv audit
+make all      # sync(--locked) + ruff + deptry + lib tests + self-tests + vacuity gate + uv audit
 make test-int # integration lane, when a Docker daemon is available
 ```
 If any step fails, stop here — the panel does not run on a red build.
@@ -28,14 +28,20 @@ output, a diff reference, or a cited URL — never an unbacked claim.
 - The proof asserts the buggy impl is caught **and** the oracle is not flagged.
 - Spot-check: would the proof fail if oracle and buggy were swapped? If not, the proof
   is vacuous.
+- **Machine-enforced:** `tools/vacuity_gate.py` (the `Vacuous-green meta-gate` **required** check)
+  neuters each lib+ai harness's declared `VACUITY_TARGETS` oracle and asserts the self-test goes
+  red. A harness with no `VACUITY_TARGETS` reads `UNMAPPED` (advisory); only `mutation_quality` is
+  intentionally exempt (mutmut can't run on native Windows). Run it directly with `make vacuity`.
 
 ### E4 — Coverage / mutation (line coverage measured; mutation advisory)
 - Is efficacy measured repo-wide, not just asserted per harness?
 - **Line coverage:** `pytest-cov` on `harnesses/` runs in CI (lib lane) and via `make coverage`.
   Report-only — no blocking floor yet, on purpose: a coverage floor invites vacuous green
   (a line can be covered but unasserted), so mutation score, not line %, is the real signal.
-- **Mutation:** the advisory `mutation.yml` lane + the `mutation_quality` harness dogfood mutmut;
-  a scoped per-harness mutation gate stays deferred (mutmut 3.x trampoline, ADR-0006).
+- **Mutation:** the advisory `mutation.yml` lane + the `mutation_quality` harness dogfood mutmut.
+  The cross-platform per-harness teeth gate now ships as `tools/vacuity_gate.py` and is a
+  **required** check (ADR-0006 update 2026-06-16); the mutmut-based *incremental* gate stays
+  deferred (mutmut 3.x trampoline).
 
 ### E5 — Supply-chain (blocking)
 - `uv sync --locked`, `deptry harnesses`, `uv audit` all clean (from step 0).

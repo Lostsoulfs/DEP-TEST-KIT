@@ -178,6 +178,27 @@ scanner would belong in `testing-kits`. Out of scope from these docs (platform/a
 harnesses): SDD frameworks (CURRANTE / Spec-Kit / OpenSpec), MemCoder / Codified Context / Active
 Context Compression, OpenDev, SWE-CI, and the agentic test-automation vendor matrix.
 
+## Backlog — next candidates (not yet built)
+Captured 2026-06-16. Each still needs a planted-bug proof and (for lib/ai) a `VACUITY_TARGETS`.
+
+**Harness candidates**
+| Candidate | Flavor / Dep | Failure class |
+|-----------|--------------|---------------|
+| `mcp_schema_confusion` | lib / pydantic | a non-additive MCP tool-schema change (removed field / narrowed type / new required input) breaks clients, missed by a naive "still valid JSON Schema" check |
+| `doc_freshness` | lib / packaging or pydantic | a docstring/README claim about a symbol or version has drifted from the live code, missed by a check that never resolves the claim (the "freshness score" class) |
+| concurrency / idempotency | integration | a non-idempotent handler double-applies under at-least-once redelivery; a race a single-threaded mock can't surface (retro gap) |
+| txn-isolation | integration / psycopg | a read-committed assumption breaks under a concurrent writer (lost update / phantom) — needs two real connections |
+
+Note: `gherkin_declarative` (imperative-vs-declarative Gherkin) is a **pure-stdlib text check** → it
+belongs in `testing-kits`, not here (no dependency anchor), unless built on a real Gherkin parser.
+
+**Gate / tooling hardening (not harnesses)**
+- Harden `tools/scan_staged.py` — it is itself vacuous-green: the regex misses `client_secret=` /
+  `access_token=` shapes and has no entropy detector. Wire in `detect-secrets` (already a dep) so the
+  repo's own secret gate has the coverage the `secret_scanning` harness proves a naive grep lacks.
+- A real incremental per-harness **mutation** runner (the ADR-0006 deferred item the vacuity gate
+  only partially covers), and distinguishing vacuity-gate "red via assertion" from "red via crash".
+
 ## Notes
 - **Batch naming:** a batch number is assigned when its harnesses ship and is never reused or
   retroactively reassigned. A harness added on its own (outside a planned batch) is labeled
