@@ -1,0 +1,26 @@
+{
+  "scanner_mode": "block",
+  "required_files": [
+    "AGENTS.md", "CLAUDE.md", "SECURITY.md", "GOLDEN_RULES.md", "SETTINGS-CHECKLIST.md",
+    ".pre-commit-config.yaml", ".gitattributes", ".gitignore", ".gitlint", ".editorconfig",
+    "pyproject.toml", "uv.lock", "Makefile",
+    "tools/scan_staged.py", "tools/vacuity_gate.py", "tools/audit_drift.py",
+    "tools/gate_canary.py", "tools/file_guard.py", "tools/control_audit.py",
+    ".fileguard.json", ".github/control-policy.json",
+    ".github/CODEOWNERS", ".github/renovate.json", ".github/pull_request_template.md"
+  ],
+  "instruction_sources": ["AGENTS.md", "CLAUDE.md"],
+  "required_workflows": ["CI", "Drift Audit", "Dependency Review", "Vacuity", "Commit Lint", "Mutation (advisory)"],
+  "exceptions": [
+    {
+      "code": "fork-checkout",
+      "path": ".github/workflows/audit.yml",
+      "reason": "Drift Audit checks out the PR head (github.head_ref) only to diff it; audit_drift.py reads `git diff` and never executes PR code, and the checkout sets persist-credentials:false (no token on disk). Same-repo PRs only."
+    },
+    {
+      "code": "fork-scan",
+      "path": ".github/workflows/audit.yml",
+      "reason": "Drift Audit reports via GITHUB_TOKEN, which is read-only on forks, so it intentionally skips fork PRs (head.repo.full_name == github.repository). Advisory workflow, not a merge gate."
+    }
+  ]
+}
