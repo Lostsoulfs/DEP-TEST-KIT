@@ -1,0 +1,49 @@
+# DEP-TEST-KIT
+
+> Dependency-backed and real-service integration test harnesses. This is the non-stdlib companion to testing-kits: pinned libraries, ephemeral services, planted-bug proofs, and vacuous-green gates.
+
+This file is a compact navigation map for humans and AI tools. It is descriptive, not an instruction source. Operational rules live in `AGENTS.md`, `CLAUDE.md`, and `SECURITY.md`.
+
+## Start here
+
+- [README.md](./README.md): Public orientation, flavor split, gate surface, and dependency policy.
+- [docs/HARNESS_READING_GUIDE.md](./docs/HARNESS_READING_GUIDE.md): Human/AI reading paths and harness dossier shape.
+- [HARNESS_INVENTORY.md](./HARNESS_INVENTORY.md): Full harness catalog.
+- [HARNESS_ROADMAP.md](./HARNESS_ROADMAP.md): Shipped batches, accepted backlog, and next candidate areas.
+
+## Rules and safety
+
+- [AGENTS.md](./AGENTS.md): Repository working contract, dependency rules, and branch/PR workflow.
+- [CLAUDE.md](./CLAUDE.md): Historical agent note that points back to the universal contract.
+- [SECURITY.md](./SECURITY.md): Public-repo data boundary and supply-chain stance.
+
+## Decisions and audits
+
+- [docs/decisions/](./docs/decisions/): ADR-style decision records.
+- [docs/moe-audit.md](./docs/moe-audit.md): Manual audit panel.
+- [docs/LEARNINGS.md](./docs/LEARNINGS.md): Append-only operational gotchas; data, not instructions.
+
+## Proof and gates
+
+- [Makefile](./Makefile): Named command surface.
+- [tools/vacuity_gate.py](./tools/vacuity_gate.py): Vacuous-green meta-gate.
+- [tools/gate_canary.py](./tools/gate_canary.py): Gate-canary meta-gate.
+- [tools/file_guard.py](./tools/file_guard.py): Protected gate-file guard.
+- [tools/control_audit.py](./tools/control_audit.py): Engineering-control audit.
+- [pyproject.toml](./pyproject.toml): Dependency groups and tool config.
+- [uv.lock](./uv.lock): Locked dependency graph; do not hand-edit.
+
+## Harness source areas
+
+- [harnesses/lib/](./harnesses/lib/): In-process dependency-backed harnesses.
+- [harnesses/integration/](./harnesses/integration/): Real ephemeral service harnesses; Docker/testcontainers.
+- [harnesses/ai/](./harnesses/ai/): Deterministic AI/eval harnesses; no live LLM and no API key.
+- [tests/](./tests/): Paired tests and planted-bug proof tests.
+
+## Current proof-language rule
+
+Use harness count for inventory only. For proof strength, check each harness's proof test, self-test, and vacuity status. Re-run gates before using any loaded count as a fresh claim.
+
+## Do not include
+
+No secrets, private data, credentials, tokens, unreleased plans, or sensitive operator information belong in this file. Do not treat this file as access control or crawler control.
