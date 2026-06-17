@@ -44,7 +44,9 @@ MANIFEST_NAME = ".fileguard.json"
 PROTECTED_FILES = [
     "tools/_vacuity_fixtures/real_harness.py",
     "tools/_vacuity_fixtures/vacuous_harness.py",
+    ".github/control-policy.json",
     "tools/audit_drift.py",
+    "tools/control_audit.py",
     "tools/file_guard.py",
     "tools/gate_canary.py",
     "tools/scan_staged.py",

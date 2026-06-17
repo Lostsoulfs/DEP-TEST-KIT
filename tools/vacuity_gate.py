@@ -61,13 +61,13 @@ def _mutate(value):
     if isinstance(value, str):
         return value + "_MUT"
     if isinstance(value, frozenset):
-        return frozenset()
+        return frozenset() if value else frozenset({None})
     if isinstance(value, set):
-        return set()
+        return set() if value else {None}
     if isinstance(value, dict):
-        return {}
+        return {} if value else {"_vacuity_mut": None}
     if isinstance(value, (list, tuple)):
-        return type(value)()
+        return type(value)() if value else type(value)((None,))
     return _SENTINEL  # None / custom objects: no type-faithful wrong value
 
 
@@ -103,10 +103,15 @@ def _neuter(module, dotted: str) -> None:
 def _load(module_ref: str):
     """Import a dotted module, or load a fixture by .py path."""
     if module_ref.endswith(".py"):
-        spec = importlib.util.spec_from_file_location("_vacuity_fixture", module_ref)
+        path = Path(module_ref).resolve()
+        if path.parent != (ROOT / "tools" / "_vacuity_fixtures").resolve():
+            raise ValueError(f"refusing to load a .py outside tools/_vacuity_fixtures: {module_ref!r}")
+        spec = importlib.util.spec_from_file_location("_vacuity_fixture", str(path))
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         return module
+    if not module_ref.startswith("harnesses."):
+        raise ValueError(f"refusing to import a module outside harnesses.*: {module_ref!r}")
     return importlib.import_module(module_ref)
 
 
@@ -130,7 +135,10 @@ def _run_worker(module_ref: str, targets: list[str]) -> int:
     args = [sys.executable, str(Path(__file__)), "--worker", "--module", module_ref]
     if targets:
         args += ["--targets", ",".join(targets)]
-    return subprocess.run(args, capture_output=True, text=True).returncode
+    try:
+        return subprocess.run(args, capture_output=True, text=True, timeout=120).returncode
+    except subprocess.TimeoutExpired:
+        return 124  # a hung self-test is a failure (red), never an infinite gate hang
 
 
 def _classify(module_ref: str, targets: list[str]) -> str:
@@ -144,8 +152,12 @@ def _classify(module_ref: str, targets: list[str]) -> str:
     control = _run_worker(module_ref, [])          # no neuter — harness should be green
     if control != 0:
         return "ERROR"                              # self-test already red without us
-    neutered = _run_worker(module_ref, targets)
-    return "TEETH" if neutered != 0 else "VACUOUS"
+    # Each target must INDEPENDENTLY turn the self-test red — neuter ONE at a time so a
+    # strong target cannot mask another vacuous one (matters once a harness maps >1 target).
+    for target in targets:
+        if _run_worker(module_ref, [target]) == 0:
+            return "VACUOUS"
+    return "TEETH"
 
 
 def _discover() -> list[tuple[str, list[str] | None]]:
