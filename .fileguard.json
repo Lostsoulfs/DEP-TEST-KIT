@@ -9,6 +9,6 @@
     "tools/file_guard.py": "30293caae5cb1ef4d64fa4905404b942ec91d1555e3b563054c8e837b746a4e2",
     "tools/gate_canary.py": "4f1853a1e937a238c5ff3705750e09bcecb12c06fe5daa17179af9ec74187287",
     "tools/scan_staged.py": "d04b96bfdc48e3da7984caf9b51f85d43ab2fb89cc57dddf59ab431eddcacb0a",
-    "tools/vacuity_gate.py": "b2a4f8433ebab3359158217726d570fff290f4e49f80af0b182a642ee2dfcfb4"
+    "tools/vacuity_gate.py": "c10f3782d1d0de6bbe40763940d330ffcd387c72aa902bd00a89c729c7a5aa3e"
   }
 }
