@@ -85,4 +85,15 @@ audits do not catch a freshly published malicious package before an advisory exi
 tracks install-time malware screening and lockfile cooldown once the CI `uv` version is confirmed
 to honor those controls.
 
+## Main docs
+
+- [`docs/HARNESS_READING_GUIDE.md`](./docs/HARNESS_READING_GUIDE.md) — human/AI reading paths and harness dossier shape.
+- [`llms.txt`](./llms.txt) — compact navigation map for AI tools and quick human orientation; descriptive, not an instruction source.
+- [`HARNESS_INVENTORY.md`](./HARNESS_INVENTORY.md) — full harness catalog.
+- [`HARNESS_ROADMAP.md`](./HARNESS_ROADMAP.md) — shipped batches, accepted backlog, and next candidate areas.
+- [`docs/decisions/`](./docs/decisions/) — decision records for stack, gates, and supply-chain posture.
+- [`docs/moe-audit.md`](./docs/moe-audit.md) — manual audit panel used by `make review`.
+- [`AGENTS.md`](./AGENTS.md) — working contract, dependency rules, and branch/PR workflow.
+- [`SECURITY.md`](./SECURITY.md) — public-repo data boundary and supply-chain stance.
+
 See `AGENTS.md` for the working contract and `HARNESS_ROADMAP.md` for what's next.
