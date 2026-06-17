@@ -109,3 +109,16 @@ DEP002 = [
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.ruff.lint]
+# flake8-bandit security lint — this repo ships security-oriented harnesses, so the
+# gate tooling (tools/) should not lint generic. S603 (subprocess) and S607 (partial
+# exec path) fire on every safe list-form call — universally noisy, no signal here.
+extend-select = ["S"]
+ignore = ["S603", "S607"]
+
+[tool.ruff.lint.per-file-ignores]
+# Harnesses intentionally demonstrate insecure patterns; tests assert + open local
+# fixture URLs. S has signal only on the gate machinery in tools/.
+"harnesses/**/*.py" = ["S"]
+"tests/**/*.py" = ["S"]
