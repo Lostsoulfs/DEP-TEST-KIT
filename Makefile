@@ -1,6 +1,6 @@
 # DEP-TEST-KIT — common tasks. Everything runs through uv for a locked, reproducible env.
 
-.PHONY: sync test coverage test-int lint deptry audit selftest mutation canary guard guard-update control-audit vacuity sbom all review
+.PHONY: sync test coverage test-int lint deptry audit selftest mutation canary guard guard-update control-audit vacuity sbom report dashboard dashboard-check all review
 
 sync:            ## provision the locked environment (all extras)
 	uv sync --locked --all-extras
@@ -50,10 +50,18 @@ vacuity:         ## vacuous-green meta-gate: neuter each mapped harness's oracle
 sbom:            ## generate a CycloneDX SBOM
 	uvx cyclonedx-py environment "$$(uv python find)" --output-format json -o sbom.cdx.json
 
+report:          ## generate local STATUS.md and STATUS.json from the harness tree
+	uv run --frozen python tools/generate_report.py
+
+dashboard: report ## generate the local static reviewer dashboard
+	uv run --frozen python tools/generate_dashboard.py
+
+dashboard-check: report ## verify the dashboard generator renders from current status data
+	uv run --frozen python tools/generate_dashboard.py --check
+
 all: sync lint deptry test selftest canary guard control-audit vacuity audit
 
-review:          ## pre-push: mechanical gates, then run the MoE audit panel by hand
-	$(MAKE) all
+review: all dashboard-check ## pre-push: mechanical gates, dashboard render check, then MoE audit
 	@echo
 	@echo "Mechanical gates green. Now run the MoE audit panel: docs/moe-audit.md"
 	@echo "Record lens verdicts in the PR's '## Self-audit' section before pushing."
