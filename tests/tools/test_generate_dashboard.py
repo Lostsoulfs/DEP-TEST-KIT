@@ -11,7 +11,10 @@ def write_status(path: Path) -> None:
         json.dumps(
             {
                 "generated_at": "2026-06-19T12:00:00Z",
-                "claim_scope": "fixture-defined proof only",
+                "claim_scope": (
+                    "current proof baseline; fixture-defined proof under current tooling; "
+                    "does not claim total correctness or production assurance"
+                ),
                 "counts": {
                     "harnesses": 1,
                     "lib": 1,
