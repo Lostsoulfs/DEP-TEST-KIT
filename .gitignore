@@ -18,6 +18,9 @@ sbom.cdx.json
 *.sbom.json
 audit-report.md
 requirements-audit.txt
+STATUS.md
+STATUS.json
+dashboard/site/index.html
 dist/
 build/
 # coverage data (the lib lane runs pytest --cov; report-only, never committed)
