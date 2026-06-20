@@ -434,3 +434,12 @@ evergreen rules into the ADRs and mark superseded entries historical.
   never the repo root.
 - Gotcha: `schemathesis.core.failures.FailureGroup` is a deep internal import — fragile
   across schemathesis upgrades; flagged for a version smoke test (E6 lens).
+
+## 2026-06-20 — CI-state literacy; environmental required-check failures
+
+New governance doc: `docs/CI_AND_LIVE_STATE.md` — the CI-status taxonomy + the
+live-state check. Incident that earned it here: a fresh advisory (pydantic-settings
+GHSA-4xgf-cpjx-pc3j) landed in OSV overnight, so the required `Audit + SBOM` check
+("fail on any CVE") began failing on every PR regardless of its diff. Diagnose the
+check, not the diff — the fix was a dependency bump (2.14.2), unrelated to the PRs it
+was blocking. Required-context failures can be environmental.

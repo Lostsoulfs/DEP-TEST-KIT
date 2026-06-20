@@ -1,7 +1,7 @@
 {
   "version": 1,
   "files": {
-    ".github/control-policy.json": "ba33a07cb9110798ddaad55dea4a008d93bf5bc94919c9157ae12e67eecc0def",
+    ".github/control-policy.json": "6a90b68d7b80bef56a8a6e99fd0b32ad6f251d0a12bcf6ff94e3f7c706e676b4",
     "tools/_vacuity_fixtures/real_harness.py": "0ee7c16a49e485a77fd67995758694a28e0b1d7f3ae101bdd2ff5f8b20305ad3",
     "tools/_vacuity_fixtures/vacuous_harness.py": "a51f092f2381e781ee961a7fc99f0258bcc43088282cdedab5d953b1923a59d3",
     "tools/audit_drift.py": "809c761d024ea97d202424972afa22c1423cba8381b7f00053785f7edec10b80",

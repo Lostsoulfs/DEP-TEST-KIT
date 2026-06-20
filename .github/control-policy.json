@@ -7,7 +7,8 @@
     "tools/scan_staged.py", "tools/vacuity_gate.py", "tools/audit_drift.py",
     "tools/gate_canary.py", "tools/file_guard.py", "tools/control_audit.py",
     ".fileguard.json", ".github/control-policy.json",
-    ".github/CODEOWNERS", ".github/renovate.json", ".github/pull_request_template.md"
+    ".github/CODEOWNERS", ".github/renovate.json", ".github/pull_request_template.md",
+    "docs/CI_AND_LIVE_STATE.md"
   ],
   "instruction_sources": ["AGENTS.md", "CLAUDE.md"],
   "required_workflows": ["CI", "Drift Audit", "Dependency Review", "Vacuity", "Commit Lint", "Mutation (advisory)"],
