@@ -33,16 +33,19 @@ exists to prevent.
 
 ## What's here
 
-**32 harnesses** (15 lib / 11 integration / 6 ai). See `HARNESS_INVENTORY.md` for the full list
+**78 harnesses** (52 lib / 11 integration / 15 ai). See `HARNESS_INVENTORY.md` for the full list
 with WHY/HOW/WHERE per harness, and `HARNESS_ROADMAP.md` for what's next. A few examples:
 
 - `lib/property_roundtrip` — Hypothesis round-trip property; shrinks a planted
   single-run-dropping decoder to a 2-char counterexample.
-- `lib/hallucinated_dependency` — resolves a pinned `name==version` against the live installed
-  environment; catches a hallucinated version of a real package that a naive name-only check misses.
+- `lib/ssrf_url_guard` — pins resolved hosts against an SSRF denylist; proves a naive
+  guard reaches an internal target a real allowlist blocks.
+- `lib/jwt_alg_confusion` — rejects `alg=none` and an HS256-with-RSA-public-key forgery
+  that a verifier trusting the token's own `alg` header accepts.
 - `integration/postgres_store` — asserts a real `UNIQUE` constraint on an ephemeral PostgreSQL;
   proves a store that forgot it silently writes duplicates (a mock catches neither).
-- `ai/llm_eval` — deterministic hallucination detection (a deepeval `BaseMetric`), no live model.
+- `ai/agent_safe_eval` — a simpleeval sandbox refuses the attribute-access escape that raw
+  `eval()` evaluates; `ai/llm_eval` — deterministic hallucination detection, no live model.
 
 ## No vacuous green — the meta-gates
 

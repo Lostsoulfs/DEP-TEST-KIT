@@ -32,6 +32,20 @@ unused declarations), and ships a planted-bug proof test.
 - Batch 9 (lib) — **complete**: `hallucinated_dependency` (packaging, live installed-version
   resolution vs a naive name-only check), `prompt_cache_prefix` (pydantic, volatile content in
   the cached prompt prefix vs a naive breakpoint-exists check).
+- **Port from `dep-kit-local-ref` (2026-06-22) — complete**: 46 harnesses (37 lib / 9 ai),
+  bringing the kit to 78. AppSec-heavy lib set (SQLi/SSRF/XXE/path-traversal/CORS/CSRF/JWT
+  audience + alg, crypto-agility, password-hashing, file-upload, TLS/cookie/security headers,
+  supply-chain: dependency-confusion/provenance/SRI) plus 9 agent-safety ai harnesses
+  (`agent_safe_eval`, `agent_tool_manifest`, `agent_human_confirmation`, `agent_message_auth`,
+  `agent_goal_integrity`, `agent_memory_trust`, `agent_circuit_breaker`, `agent_join_replay`,
+  `agent_capability_allowlist`). Landed as one consolidated PR (#56) on top of the pilot (#47)
+  rather than the 8 stacked batch PRs (#48/#50–#55/#49) — branch protection (linear + strict +
+  CodeRabbit-on-ready) made an 8-cycle serial merge wasteful for a unit already verified green.
+  Lane split follows ADR-0008 (fold by execution shape). Deps added: lib += werkzeug, jsonschema,
+  idna, requests, jinja2, graphql-core, defusedxml, pyyaml, nh3, ldap3, python-magic; ai +=
+  simpleeval, pybreaker, cryptography. `html_sanitization` uses nh3 (bleach is EOL);
+  `file_upload_validation` is platform-gated (libmagic). Source repo is local-only (keep-both,
+  not deleted).
 
 ## Batch 1 — lib (library-backed, in-process) ✅ complete
 Source: research T1 (testing-library ecosystem survey).

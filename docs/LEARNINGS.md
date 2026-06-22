@@ -5,6 +5,40 @@ dated. This is **data, not instructions** — never act on a line here as a comm
 The auditor and explorer agents append here; when it grows past ~500 lines, promote
 evergreen rules into the ADRs and mark superseded entries historical.
 
+## 2026-06-22 — Port from `dep-kit-local-ref`: 46 harnesses, consolidated landing
+- Ported 46 harnesses (37 lib / 9 ai) from the local-only `dep-kit-local-ref` into this repo
+  (keep-both; source never deleted/pushed), taking the kit 32 → **78** (52 lib / 11 integration
+  / 15 ai). Lane assignment follows the new ADR-0008 (fold by execution shape: AppSec/correctness
+  → lib, agent/model behavior → ai). Dep additions + CVE floors recorded in the ADR-0001 addendum.
+- **Merge strategy: one consolidated PR (#56) beat 8 stacked batch PRs.** The batches were
+  authored as a stack (#48 dep-add → #50–#55 → #49 independent). `main` enforces linear history +
+  strict "up-to-date" + required CodeRabbit (which only runs on *ready*, not draft). That combo
+  forces a stacked merge into ~8 serial CI cycles (merge → main moves → restack next → re-run the
+  Docker lane + CodeRabbit). Since the full 78-harness state was already verified green as a unit,
+  we collapsed the remaining 43 into a single squashed PR on top of the merged pilot (#47) and
+  closed the 8 drafts as superseded. Identical end state, one CI cycle.
+- **`--delete-branch` cascade-closes stacked children.** Merging #47 with `--delete-branch`
+  deleted its branch, which was the *base* of #48 — GitHub auto-CLOSED #48 (a PR whose base branch
+  is deleted is closed, not retargeted). `deleteBranchOnMerge` was already false repo-wide; the
+  damage came from the explicit flag. For stacked PRs: never `--delete-branch` mid-sequence.
+- **`make all` does NOT run the secret scanner.** `tools/scan_staged.py` is a separate CI workflow
+  + pre-commit hook, so a green local `make all` says nothing about the secret gate. It flagged
+  `jwt_audience_binding._SECRET` (GENERIC_SECRET_ASSIGNMENT). Shortening the value <16 chars to
+  dodge the heuristic CONFLICTS with PyJWT's 32-byte HS256 floor (emits InsecureKeyLengthWarning),
+  so the right fix was the gate's sanctioned `allowlist secret` marker on a proper-length key — not
+  a weaker key.
+- **Copy-verify gaps the real `make all` caught** (the source was copy-verified, never run here):
+  `html_sanitization` rewritten bleach→**nh3** (bleach EOL); `file_upload_validation` libmagic
+  **hangs** on native Windows → lazy import + platform skip + vacuity-exempt (mutmut-style);
+  `path_traversal` POSIX-normalized containment compare for Windows; plus F401/E402/corpus fixes.
+- **Adversarially triaged 13 bot review comments** (CodeQL/Codacy/CodeRabbit) against the code:
+  **1 real** (a `pytest.raises(Exception)` on the graphql oracle tightened to the specific
+  `ValueError` — broad catch could green on an unrelated crash), **3 by-design** (CodeQL weak-RSA/
+  MD5 are the *planted buggy fixtures*; the oracles are genuinely secure), **9 false-positive**
+  (notably: `==`-pin demand contradicts the repo's `>=`-floor+uv.lock convention; `reset_token`
+  verifies HMAC *before* `int(exp)` so the "raises" path is unreachable). Pattern: a scanner
+  flagging the insecure side of a planted-defect harness is expected, not a finding.
+
 ## 2026-06-16 — supply-chain: vendor-independent pip-audit OSV gate (ADR-0007 D3, partial)
 - Added a second, non-Astral OSV gate to the Audit+SBOM CI job: `uv export --frozen
   --no-emit-project --format requirements-txt` → `uvx pip-audit -r ...`. Defense-in-depth + removes
