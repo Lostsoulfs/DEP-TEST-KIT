@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import posixpath
 import sys
 from typing import Callable
 
@@ -66,9 +67,17 @@ class NaiveJoiner:
         return os.path.join(base, user_path)  # BUG: traversal escapes the base
 
 
+def _within_base(resolved: str) -> bool:
+    # POSIX-normalize so containment is platform-independent: safe_join returns POSIX
+    # paths while os.path.join (the buggy joiner) returns OS-native ones (backslashes on
+    # Windows). Compare on the path boundary so "/srv/wwwroot" never matches "/srv/www".
+    norm = posixpath.normpath(resolved.replace(chr(92), "/"))
+    return norm == _BASE or norm.startswith(_BASE + "/")
+
+
 def resolves_within_base(make_joiner: Callable[[], object]) -> bool:
     resolved = make_joiner().resolve(_BASE, "docs/index.html")
-    return os.path.normpath(resolved).startswith(_BASE)
+    return _within_base(resolved)
 
 
 def escapes_base(make_joiner: Callable[[], object]) -> bool:
@@ -77,7 +86,7 @@ def escapes_base(make_joiner: Callable[[], object]) -> bool:
         resolved = make_joiner().resolve(_BASE, "../../etc/passwd")
     except Exception:
         return False
-    return not os.path.normpath(resolved).startswith(_BASE)
+    return not _within_base(resolved)
 
 
 def run_self_test() -> int:

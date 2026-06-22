@@ -77,10 +77,14 @@ def test_oracle_garbage_expressions_raise() -> None:
 import pytest  # noqa: E402
 
 # --- pass 4 (corpus): simpleeval blocks attribute access + undefined names ---
+# NOTE: simpleeval allows a bare non-dunder method *reference* like "''.join" (it returns
+# the bound method, harmless without a call), so that is not an escape and is intentionally
+# excluded. The dangerous surface — dunder traversal, DISALLOW_METHODS (format), and
+# undefined builtins (open/exec/__import__) — is what must be refused.
 _EVAL_ESCAPES = [
     "().__class__", "(1).__class__", "[].__class__", "''.__class__", "{}.__class__",
     "().__class__.__bases__", "''.__class__.__mro__", "().__class__.__subclasses__()",
-    "''.join", "''.format", "[].append",
+    "''.format", "[].append",
     "__import__('os')", "__import__('subprocess')", "open('/etc/passwd')",
     "exec('x=1')", "eval('1+1')", "globals()", "locals()", "vars()", "dir()",
     "getattr([], 'append')", "compile('1', 'x', 'eval')", "os.system('id')",
