@@ -78,6 +78,12 @@ ai = [
   # simpleeval expression sandbox for the agent_safe_eval harness (ASI05 / CWE-95) —
   # refuses the attribute-access escape that raw eval() evaluates.
   "simpleeval>=1.0.7",
+  # cryptography (Ed25519 sign/verify, HMAC) for the agent identity/replay harnesses:
+  # agent_join_replay, agent_message_auth, agent_tool_manifest, agent_human_confirmation.
+  # Also in the lib extra, but deptry checks the matching extra, so the ai lane declares it.
+  "cryptography>=43.0",
+  # pybreaker circuit breaker for agent_circuit_breaker (ASI08 cascading-failure / retry storm).
+  "pybreaker>=1.4.1",
 ]
 
 # PEP 735 dev tooling — not runtime, not scanned as harness imports.
