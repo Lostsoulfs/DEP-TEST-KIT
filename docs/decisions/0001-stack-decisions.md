@@ -66,6 +66,29 @@ tests), parked under the future `ai/` flavor. Note: T3's "mutation" means *fuzze
 mutation*, distinct from T1's *test-suite mutation testing* (mutmut) — they are not the
 same gate.
 
+## Addendum — ported dependency additions (2026-06-22)
+The `dep-kit-local-ref` port (46 harnesses; see `HARNESS_ROADMAP.md` and ADR-0008) added 14
+dependency declarations, each only because a shipped harness imports it (deptry-enforced). They
+follow the established rule: a `>=` **floor** in `pyproject` (CVE floor where relevant) + exact
+pin in `uv.lock`.
+
+- **lib** += `werkzeug` (safe_join), `jsonschema` (schema contracts), `idna` (host
+  canonicalization), `requests` (header-validity / fail-closed authz), `jinja2`
+  (autoescape / SSTI sandbox), `graphql-core` (depth limit), `defusedxml` (XXE),
+  `pyyaml` (deserialization), `nh3` (HTML sanitization), `ldap3` (LDAP-filter escaping),
+  `python-magic` (content-type by magic bytes).
+- **ai** += `simpleeval` (expression sandbox), `pybreaker` (agent circuit breaker),
+  `cryptography` (already a lib dep; now also declared for the ai extra's signing harnesses).
+
+Two deliberate substitutions/limits, recorded so they aren't re-litigated:
+- **nh3, not bleach** — `bleach` is end-of-life; `nh3` (ammonia/Rust) is the maintained
+  allow-list HTML sanitizer.
+- **`python-magic` is platform-gated** — libmagic hangs under python-magic on native Windows,
+  so `file_upload_validation` imports it lazily and skips its self-test on Windows (CI/Linux runs
+  it), the same env-skip pattern as the `mutmut` lane; it is vacuity-exempt for that reason.
+- **CVE floors applied at add time:** `werkzeug>=3.0.6` (CVE-2024-49766), `idna>=3.15`
+  (CVE-2026-45409), `requests>=2.32.4` (CVE-2024-47081).
+
 ## Consequence
 The anti-goal is **vacuous green**: a test/gate/proof that passes while inert. Every
 harness ships a planted-bug proof; CI gates only ever strengthen.
