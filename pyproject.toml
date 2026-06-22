@@ -35,6 +35,9 @@ lib = [
   # PEP 440 parsing/comparison for the hallucinated_dependency harness (resolves a pinned
   # name==version against the live installed environment). Was transitive; now imported directly.
   "packaging>=24.0",
+  # werkzeug.security.safe_join for the path_traversal harness (CWE-22). >=3.0.6 clears
+  # CVE-2024-49766 (Windows UNC traversal in safe_join) and CVE-2024-34069 (debugger RCE).
+  "werkzeug>=3.0.6",
 ]
 # real-service harnesses (spin ephemeral containers; need Docker at run time)
 integration = [
@@ -62,6 +65,9 @@ integration = [
 ai = [
   "hypothesis>=6.130",
   "deepeval>=2.0",
+  # simpleeval expression sandbox for the agent_safe_eval harness (ASI05 / CWE-95) —
+  # refuses the attribute-access escape that raw eval() evaluates.
+  "simpleeval>=1.0.7",
 ]
 
 # PEP 735 dev tooling — not runtime, not scanned as harness imports.
