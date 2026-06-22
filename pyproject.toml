@@ -35,6 +35,36 @@ lib = [
   # PEP 440 parsing/comparison for the hallucinated_dependency harness (resolves a pinned
   # name==version against the live installed environment). Was transitive; now imported directly.
   "packaging>=24.0",
+  # werkzeug.security.safe_join for the path_traversal harness (CWE-22). >=3.0.6 clears
+  # CVE-2024-49766 (Windows UNC traversal in safe_join) and CVE-2024-34069 (debugger RCE).
+  "werkzeug>=3.0.6",
+  # jsonschema Draft validation for cookie_security / security_headers / eu_ai_act_logging
+  # (header & field-completeness contracts) and nosql_injection (scalar-input enforcement).
+  "jsonschema>=4.21",
+  # idna host canonicalization for cors_misconfig / open_redirect / ssrf_url_guard /
+  # unicode_account_confusion. >=3.15 clears CVE-2026-45409 (ReDoS in idna.encode).
+  "idna>=3.15",
+  # requests Session/HTTPAdapter/exception types for crlf_header_injection / failopen_authz /
+  # tls_verification (oracles hinge on the real requests types, not httpx). >=2.32.4 clears
+  # CVE-2024-47081 (.netrc credential leak) and CVE-2024-35195 (verify=False cache).
+  "requests>=2.32.4",
+  # jinja2 autoescape + SandboxedEnvironment for jinja_autoescape_xss / jinja_ssti_sandbox
+  # (XSS / SSTI). Transitive via flask; promoted to a direct import. >=3.1.6 = current line.
+  "jinja2>=3.1.6",
+  # graphql-core (import name: graphql) for graphql_depth_limit — query depth-limit fence.
+  "graphql-core>=3.2",
+  # defusedxml (import name: defusedxml) for xxe_defense — XXE / entity-expansion refusal.
+  "defusedxml>=0.7.1",
+  # PyYAML (import name: yaml) for yaml_deserialization — safe_load vs the unsafe full loader.
+  "pyyaml>=6.0.2",
+  # nh3 (maintained Rust/ammonia sanitizer; bleach is EOL) for html_sanitization — strips
+  # active markup (script/img/svg/iframe, event handlers, javascript: URLs).
+  "nh3>=0.2.15",
+  # ldap3 escape_filter_chars (pure-Python, no directory server) for ldap_injection (CWE-90).
+  "ldap3>=2.9",
+  # python-magic (import name: magic) for file_upload_validation — MIME from magic bytes vs the
+  # claimed .ext (CWE-434). Needs the native libmagic library present at runtime.
+  "python-magic>=0.4.27",
 ]
 # real-service harnesses (spin ephemeral containers; need Docker at run time)
 integration = [
@@ -62,6 +92,15 @@ integration = [
 ai = [
   "hypothesis>=6.130",
   "deepeval>=2.0",
+  # simpleeval expression sandbox for the agent_safe_eval harness (ASI05 / CWE-95) —
+  # refuses the attribute-access escape that raw eval() evaluates.
+  "simpleeval>=1.0.7",
+  # cryptography (Ed25519 sign/verify, HMAC) for the agent identity/replay harnesses:
+  # agent_join_replay, agent_message_auth, agent_tool_manifest, agent_human_confirmation.
+  # Also in the lib extra, but deptry checks the matching extra, so the ai lane declares it.
+  "cryptography>=43.0",
+  # pybreaker circuit breaker for agent_circuit_breaker (ASI08 cascading-failure / retry storm).
+  "pybreaker>=1.4.1",
 ]
 
 # PEP 735 dev tooling — not runtime, not scanned as harness imports.
