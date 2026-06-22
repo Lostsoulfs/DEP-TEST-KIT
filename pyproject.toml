@@ -57,6 +57,14 @@ lib = [
   "defusedxml>=0.7.1",
   # PyYAML (import name: yaml) for yaml_deserialization — safe_load vs the unsafe full loader.
   "pyyaml>=6.0.2",
+  # nh3 (maintained Rust/ammonia sanitizer; bleach is EOL) for html_sanitization — strips
+  # active markup (script/img/svg/iframe, event handlers, javascript: URLs).
+  "nh3>=0.2.15",
+  # ldap3 escape_filter_chars (pure-Python, no directory server) for ldap_injection (CWE-90).
+  "ldap3>=2.9",
+  # python-magic (import name: magic) for file_upload_validation — MIME from magic bytes vs the
+  # claimed .ext (CWE-434). Needs the native libmagic library present at runtime.
+  "python-magic>=0.4.27",
 ]
 # real-service harnesses (spin ephemeral containers; need Docker at run time)
 integration = [
